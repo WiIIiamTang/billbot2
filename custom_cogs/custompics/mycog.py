@@ -20,7 +20,8 @@ class CustomPics(commands.Cog):
 
     @commands.command()
     async def waifu(self, ctx: commands.Context):
-        await ctx.send(get_waifu())
+        img = await get_waifu()
+        await ctx.send(img)
 
     @commands.command()
     async def genshin(self, ctx: commands.Context, *, query: str):
