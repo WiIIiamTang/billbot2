@@ -1,6 +1,7 @@
 .env
 data
 __pycache__
+.pytest_cache
 temp.*
 tmp.*
 postsetup.txt

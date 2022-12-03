@@ -1,5 +1,5 @@
 from redbot.core import commands
-import requests
+from ..functions import get_gelbooru, get_waifu
 import booru
 import discord
 
@@ -12,19 +12,12 @@ class CustomPics(commands.Cog):
 
     @commands.command()
     async def waifu(self, ctx: commands.Context):
-        r = requests.get("https://api.waifu.im/search/")
-        await ctx.send(r.json()["images"][0]["url"])
+        await ctx.send(get_waifu())
 
     @commands.command()
     async def genshin(self, ctx: commands.Context, *, query: str):
         try:
-            res = await self.gel.search(
-                query=f"{query}_(genshin_impact) -rating:explicit,questionable",
-                limit=1,
-                random=True,
-                gacha=True,
-            )
-            data = booru.resolve(res)
+            data = await get_gelbooru(self.gel, query)
             embed = discord.Embed(
                 title=f"Search: {query}",
                 color=0x00FF00,

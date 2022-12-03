@@ -10,10 +10,12 @@ RUN apt-get update; \
 COPY run.sh /app/
 COPY server/flaskapp.py /app/
 COPY run.py /app/
-COPY custom-cogs /app/custom-cogs/
+COPY custom_cogs /app/custom_cogs/
 COPY setup-env.sh /app/functions/
+COPY tests /app/
+COPY conftest.py /app/
 
-RUN pip3 install waitress Flask python-dotenv pytest
+RUN pip3 install waitress Flask python-dotenv pytest pytest-asyncio booru requests
 
 WORKDIR /app
 

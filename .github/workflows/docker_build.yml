@@ -15,4 +15,4 @@ jobs:
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag billbot2
       - name: Run tests inside container
-        run: docker run billbot2 pytest -p no:warnings
+        run: docker run -e RUNTIME_ENV='docker' billbot2 pytest -p no:warnings
