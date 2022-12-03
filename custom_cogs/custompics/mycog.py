@@ -1,7 +1,15 @@
 from redbot.core import commands
-from ..functions import get_gelbooru, get_waifu
-import booru
-import discord
+import sys
+import os
+
+print(os.getcwd())
+print(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from functions import get_gelbooru, get_waifu  # noqa: E402
+import booru  # noqa: E402
+import discord  # noqa: E402
 
 
 class CustomPics(commands.Cog):

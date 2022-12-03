@@ -9,7 +9,7 @@ async def get_waifu():
 
 async def get_gelbooru(gel, query):
     res = await gel.search(
-        query=f"{query}_(genshin_impact) -rating:explicit,questionable",
+        query=f"{query}_(genshin_impact) -rating:explicit -rating:questionable",
         limit=1,
         random=True,
         gacha=True,
