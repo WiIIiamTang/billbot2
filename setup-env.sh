@@ -32,4 +32,4 @@ python -m venv /data/venv
 
 echo "Activated env"
 echo "Installing additional requirements..."
-pip install requests
+pip install requests asyncio booru

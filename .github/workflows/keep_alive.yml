@@ -3,7 +3,7 @@ name: Scheduled check
 on:
   schedule:
     # /30 denotes that it will run once every 30 minutes
-    - cron: "*/14 * * * *"
+    - cron: "*/13 * * * *"
 
 jobs:
   ping:

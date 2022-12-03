@@ -13,6 +13,8 @@ COPY run.py /app/
 COPY custom-cogs /app/custom-cogs/
 COPY setup-env.sh /app/functions/
 
-RUN pip3 install waitress Flask python-dotenv
+RUN pip3 install waitress Flask python-dotenv pytest
+
+WORKDIR /app
 
 CMD ["sh", "/app/run.sh"]
