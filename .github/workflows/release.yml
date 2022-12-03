@@ -10,14 +10,6 @@ permissions:
   contents: read
 
 jobs:
-  fail:
-    # fail the workflow if the Docker Image CI workflow failed
-    if: ${{ github.event.workflow_run.conclusion != 'failure' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Fail
-        run: exit 1
-
   # Otherwise, continue to build test and deploy
   buildtest:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
