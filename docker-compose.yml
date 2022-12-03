@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+   billbot:
+    build:
+      context: .
+    container_name: billbot
+    #restart: unless-stopped
+    ports:
+    - 8000:5000
+    volumes:
+    - ./data:/data
+    environment:
+    - TOKEN=${TOKEN}
+    - PREFIX=.
