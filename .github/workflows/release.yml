@@ -55,5 +55,5 @@ jobs:
           url: ${{ secrets.DEPLOY_HOOK }}
           method: GET
 
-      - NAME: Deploy response
+      - name: Deploy response
         run: echo ${{ steps.getreq.outputs.response }}
