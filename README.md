@@ -26,7 +26,7 @@ docker run -e RUNTIME_ENV='docker' {imagetag} pytest -p no:warnings
 Or locally,
 
 ```
-pytest
+RUNTIME_ENV=dev pytest
 ```
 
 ## Post setup

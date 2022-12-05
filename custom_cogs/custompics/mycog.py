@@ -1,4 +1,5 @@
 from redbot.core import commands
+from io import BytesIO
 import sys
 import os
 
@@ -7,7 +8,7 @@ print(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from functions import get_gelbooru, get_waifu, get_answer_from_reddit  # noqa: E402
+from functions import get_gelbooru, get_waifu, get_wolfram_simple  # noqa: E402
 import booru  # noqa: E402
 import discord  # noqa: E402
 
@@ -18,9 +19,13 @@ class CustomPics(commands.Cog):
         self.gel = booru.Gelbooru()
 
     @commands.command()
-    async def ask(self, ctx: commands.Context, *, question: str):
-        answer = await get_answer_from_reddit(question)
-        await ctx.send(answer)
+    async def wolfram(self, ctx, *args):
+        if len(args) == 0:
+            await ctx.send("Please provide a query.")
+            return
+
+        r = get_wolfram_simple(" ".join(args))
+        await ctx.send(file=discord.File(BytesIO(r.content), "wolfram.png"))
 
     @commands.command()
     async def waifu(self, ctx: commands.Context):
