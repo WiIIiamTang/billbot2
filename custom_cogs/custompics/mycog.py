@@ -7,7 +7,7 @@ print(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from functions import get_gelbooru, get_waifu  # noqa: E402
+from functions import get_gelbooru, get_waifu, get_answer_from_reddit  # noqa: E402
 import booru  # noqa: E402
 import discord  # noqa: E402
 
@@ -16,7 +16,11 @@ class CustomPics(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.gel = booru.Gelbooru()
-        # self.bot.loop.create_task(self.notify_debug())
+
+    @commands.command()
+    async def ask(self, ctx: commands.Context, *, question: str):
+        answer = await get_answer_from_reddit(question)
+        await ctx.send(answer)
 
     @commands.command()
     async def waifu(self, ctx: commands.Context):
