@@ -1,6 +1,7 @@
 import booru
 import requests
 import os
+import random
 import urllib.parse
 from dotenv import load_dotenv
 
@@ -23,12 +24,19 @@ def get_wolfram_simple(query, test=False):
     return requests.get(url)
 
 
-async def get_gelbooru(gel, query):
-    res = await gel.search(
-        query=f"{query}_(genshin_impact) -rating:explicit -rating:questionable",
-        limit=1,
-        random=True,
-        gacha=True,
-    )
+async def get_gelbooru(gel, query, tries=0, limit=100):
+    try:
+        res = await gel.search(
+            query=f"{query}_(genshin_impact) -rating:explicit -rating:questionable",
+            limit=limit,
+            random=True,
+        )
+    except ValueError:
+        if tries < 3:
+            return await get_gelbooru(gel, query, tries + 1, limit - 30)
+        else:
+            raise ValueError("No results found.")
     data = booru.resolve(res)
-    return data
+
+    # return a random element because the bot should try to send different images
+    return random.choice(data)

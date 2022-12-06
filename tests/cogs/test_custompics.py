@@ -4,7 +4,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_booru_search(custom_pics):
-    data = await custom_pics.get_gelbooru(booru.Gelbooru(), "eula")
+    data = await custom_pics.get_gelbooru(booru.Gelbooru(), "faruzan")
     assert data["file_url"] is not None
 
 
