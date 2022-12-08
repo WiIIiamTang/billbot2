@@ -8,7 +8,12 @@ print(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from functions import get_gelbooru, get_waifu, get_wolfram_simple  # noqa: E402
+from functions import (
+    get_gelbooru,
+    get_waifu,
+    get_wolfram_simple,
+    get_openai_img,
+)  # noqa: E402
 import booru  # noqa: E402
 import discord  # noqa: E402
 
@@ -48,3 +53,25 @@ class CustomPics(commands.Cog):
             await ctx.send(embed=embed)
         except ValueError as e:
             await ctx.send(f"Error: `{e}`")
+
+    @commands.command()
+    async def openai(self, ctx, *args):
+        if len(args) == 0:
+            await ctx.send("Please provide a query.")
+            return
+
+        r, data = get_openai_img(" ".join(args))
+
+        if not r:
+            if data["status"] == "flagged":
+                await ctx.send(
+                    f"Hi {ctx.author.mention}, your query was flagged for violating the OpenAI ToS and content policy.\
+                    My account will get banned if you keep on doing this.\
+                    Here are the categories your query was flagged for: {', '.join(data['categories'])}"
+                )
+            elif data["status"] == "openai_error":
+                await ctx.send(
+                    f"The server responded with an error: {': '.join(data['error'])}"
+                )
+
+        await ctx.send(data["img_url"])

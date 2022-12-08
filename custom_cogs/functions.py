@@ -3,6 +3,7 @@ import requests
 import os
 import random
 import urllib.parse
+import openai
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -40,3 +41,30 @@ async def get_gelbooru(gel, query, tries=0, limit=100):
 
     # return a random element because the bot should try to send different images
     return random.choice(data)
+
+
+def get_openai_img(query, test=False):
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+    mod_response = openai.Moderation.create(
+        input=query,
+    )
+    mod_results = mod_response["results"][0]
+
+    if mod_results["flagged"]:
+        return False, {
+            "status": "flagged",
+            "categories": [c for c, b in mod_results["categories"].items() if b],
+        }
+
+    if test:
+        return True, None
+
+    try:
+        img_response = openai.Image.create(
+            prompt=query,
+            n=1,
+            size="512x512",
+        )
+        return True, {"status": "success", "img_url": img_response["data"][0]["url"]}
+    except openai.error.OpenAIError as e:
+        return False, {"status": "openai_error", "error": [e.http_status, e.error]}
