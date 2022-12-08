@@ -16,7 +16,7 @@ async def test_waifu(custom_pics):
 
 def test_wolfram(custom_pics):
     data = custom_pics.get_wolfram_simple("2+2", test=True)
-    assert data.status_code == 403
+    assert (data.status_code == 403) or (data.status_code == 503)
 
 
 def test_openai_moderation_block(custom_pics):
