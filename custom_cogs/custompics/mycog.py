@@ -73,9 +73,9 @@ These are the categories your query was flagged for: {}".format(
                 )
             elif data["status"] == "openai_error":
                 await ctx.send(
-                    "Hi {}, that didn't work\n\
+                    "Hi {}, that didn't work.\n\
 A lot of the times this is because your query broke OpenAI ToS and/or content policy.\n\
-The server responded with an error: {}".format(
+The server responded with an error: `{}`".format(
                         ctx.author.mention, ": ".join(data["error"])
                     )
                 )
