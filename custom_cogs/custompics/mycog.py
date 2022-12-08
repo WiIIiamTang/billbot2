@@ -65,13 +65,19 @@ class CustomPics(commands.Cog):
         if not r:
             if data["status"] == "flagged":
                 await ctx.send(
-                    f"Hi {ctx.author.mention}, your query was flagged for violating the OpenAI ToS and content policy.\
-                    My account will get banned if you keep on doing this.\
-                    Here are the categories your query was flagged for: {', '.join(data['categories'])}"
+                    "Hi {}, your query was flagged for violating the OpenAI ToS and content policy.\n\
+                    My account will get banned if you keep on doing this.\n\
+                    These are the categories your query was flagged for: {}".format(
+                        ctx.author.mention, ", ".join(data["categories"])
+                    )
                 )
             elif data["status"] == "openai_error":
                 await ctx.send(
-                    f"The server responded with an error: {': '.join(data['error'])}"
+                    "Hi {}, that didn't work\n\
+                    A lot of the times this is because your query broke OpenAI ToS and/or content policy.\n\
+                    The server responded with an error: {}".format(
+                        ctx.author.mention, ": ".join(data["error"])
+                    )
                 )
             return
         await ctx.send(data["img_url"])
