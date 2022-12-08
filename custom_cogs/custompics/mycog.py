@@ -8,7 +8,7 @@ print(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from functions import (
+from functions import (  # noqa: E402
     get_gelbooru,
     get_waifu,
     get_wolfram_simple,
