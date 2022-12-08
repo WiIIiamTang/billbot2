@@ -73,5 +73,5 @@ class CustomPics(commands.Cog):
                 await ctx.send(
                     f"The server responded with an error: {': '.join(data['error'])}"
                 )
-
+            return
         await ctx.send(data["img_url"])
