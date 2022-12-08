@@ -15,6 +15,4 @@ jobs:
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag billbot2
       - name: Run tests inside container
-        run: docker run -e RUNTIME_ENV='docker' billbot2 pytest -p no:warnings
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: docker run -e RUNTIME_ENV='docker' -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} billbot2 pytest -p no:warnings
