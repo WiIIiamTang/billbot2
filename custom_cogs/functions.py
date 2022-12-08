@@ -32,11 +32,11 @@ async def get_gelbooru(gel, query, tries=0, limit=100):
             limit=limit,
             random=True,
         )
-    except ValueError:
+    except Exception as e:
         if tries < 3:
             return await get_gelbooru(gel, query, tries + 1, limit - 30)
         else:
-            raise ValueError("No results found.")
+            raise ValueError("No results found.", e)
     data = booru.resolve(res)
 
     # return a random element because the bot should try to send different images
