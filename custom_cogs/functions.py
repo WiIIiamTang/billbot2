@@ -69,5 +69,5 @@ def get_openai_img(query, test=False):
     except openai.error.OpenAIError as e:
         return False, {
             "status": "openai_error",
-            "error": [str(e.http_status), str(e.error)],
+            "error": [str(e.http_status), str(e.error["message"])],
         }
