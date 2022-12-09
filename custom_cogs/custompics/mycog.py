@@ -199,7 +199,9 @@ The server responded with an error: `{}`".format(
 
             # Do not respond if it's been greater than 5 minutes since the last message
             if (current_time - user["time"]).total_seconds() > 300:
-                self.listening_to.remove(message.author)
+                self.listening_to = [
+                    i for i in self.listening_to if i["user"] != message.author
+                ]
                 return
             # Do not respond if it's been less than min_chat_waittime seconds since the last message
             elif (
