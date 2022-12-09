@@ -31,6 +31,7 @@ class CustomPics(commands.Cog):
         self.listening_to = []
         self.chat_token = os.getenv("SESSION_TOKEN", None)
         self.chatbot = None
+        self.min_chat_waittime = 10
         if not self._start_chatbot():
             raise RuntimeError(
                 "Chatbot failed to start. At cog: CustomPics. Double check session token."
@@ -200,14 +201,15 @@ The server responded with an error: `{}`".format(
             if (current_time - user["time"]).total_seconds() > 300:
                 self.listening_to.remove(message.author)
                 return
-            # Do not respond if it's been less than 60 seconds since the last message
-            elif (current_time - user["time"]).total_seconds() < 60 and not user[
-                "first"
-            ]:
+            # Do not respond if it's been less than min_chat_waittime seconds since the last message
+            elif (
+                current_time - user["time"]
+            ).total_seconds() < self.min_chat_waittime and not user["first"]:
                 await message.channel.send(
-                    "Hey {}, for now I'm only responding to one message per minute to avoid spam.\n\
+                    "Hey {}, my single brain cell is being overworked.\n\
+For now, I'm only responding to one message every {}secs because it gets too exhausting.\n\
 If you want to end the chat session, type `.stopchat`.".format(
-                        message.author.mention
+                        message.author.mention, self.min_chat_waittime
                     )
                 )
                 return
