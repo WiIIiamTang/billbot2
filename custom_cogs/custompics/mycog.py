@@ -154,6 +154,8 @@ The server responded with an error: `{}`".format(
                 )
             )
 
+        self.chatbot.reset_chat()
+
     # TODO: Can we remove this? It won't work because the message exceeds the free limit of 2000 characters
 
     # @commands.command()
@@ -202,6 +204,7 @@ The server responded with an error: `{}`".format(
                 self.listening_to = [
                     i for i in self.listening_to if i["user"] != message.author
                 ]
+                self.chatbot.reset_chat()
                 return
             # Do not respond if it's been less than min_chat_waittime seconds since the last message
             elif (
@@ -236,3 +239,7 @@ If you want to end the chat session, type `.stopchat`.".format(
                         response_length -= 1990
             except Exception as e:
                 await message.channel.send("Something went wrong: {}".format(e))
+                await message.channel.send(
+                    "One problem is that conversation has a max length.\
+Try .stopchat then .startchat to reset the conversation."
+                )
