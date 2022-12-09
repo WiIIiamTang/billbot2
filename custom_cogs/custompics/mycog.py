@@ -2,7 +2,7 @@ from redbot.core import commands
 from io import BytesIO
 import sys
 import os
-from revChatGPT.revChatGPT import Chatbot
+from asyncChatGPT.asyncChatGPT import Chatbot
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -221,7 +221,7 @@ If you want to end the chat session, type `.stopchat`.".format(
                 return
 
             try:
-                response = get_chatgpt(query, self.chatbot, test=False)
+                response = await get_chatgpt(query, self.chatbot, test=False)
                 user["first"] = False
                 response_length = len(response)
 

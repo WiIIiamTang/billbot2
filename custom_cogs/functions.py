@@ -78,10 +78,10 @@ def get_openai_img(query, test=False):
         }
 
 
-def get_chatgpt(query, chatbot, test=False):
+async def get_chatgpt(query, chatbot, test=False):
     if test:
         response = query
     else:
-        response = chatbot.get_chat_response(query, output="text")
+        response = await chatbot.get_chat_response(query, output="text")
 
     return response.get("message", "ERROR: There was no `message` field found.")
