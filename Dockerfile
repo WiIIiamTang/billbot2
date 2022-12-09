@@ -15,7 +15,7 @@ COPY setup-env.sh /app/functions/
 COPY tests /app/
 COPY conftest.py /app/
 
-RUN pip3 install waitress Flask python-dotenv pytest pytest-asyncio booru requests openai
+RUN pip3 install waitress Flask python-dotenv pytest pytest-asyncio booru==1.0.15 requests openai
 
 WORKDIR /app
 
