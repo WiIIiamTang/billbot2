@@ -69,5 +69,19 @@ def get_openai_img(query, test=False):
     except openai.error.OpenAIError as e:
         return False, {
             "status": "openai_error",
-            "error": [str(e.http_status), str(e.error["message"])],
+            "error": [str(e)],
         }
+    except Exception as e:
+        return False, {
+            "status": "openai_error",
+            "error": [f"Unknown error: {e}"],
+        }
+
+
+def get_chatgpt(query, chatbot, test=False):
+    if test:
+        response = query
+    else:
+        response = chatbot.get_chat_response(query, output="text")
+
+    return response.get("message", "ERROR: There was no `message` field found.")
