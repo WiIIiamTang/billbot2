@@ -223,6 +223,14 @@ If you want to end the chat session, type `.stopchat`.".format(
             try:
                 response = get_chatgpt(query, self.chatbot, test=False)
                 user["first"] = False
-                await message.channel.send(response)
+                response_length = len(response)
+
+                if response_length <= 1990:
+                    await message.channel.send(response)
+                else:
+                    while response_length > 0:
+                        await message.channel.send(response[:1990])
+                        response = response[1990:]
+                        response_length -= 1990
             except Exception as e:
                 await message.channel.send("Something went wrong: {}".format(e))
