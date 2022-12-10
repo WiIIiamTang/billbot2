@@ -38,12 +38,12 @@ class CustomPics(commands.Cog):
                 "Chatbot failed to start. At cog: CustomPics. Double check session token."
             )
 
-    def _start_chatbot(self):
-        if self.chat_token is None:
+    def _start_chatbot(self, token=None):
+        if self.chat_token is None and token is None:
             return False
 
         config = {
-            "session_token": self.chat_token,
+            "session_token": self.chat_token if token is None else token,
         }
         self.chatbot = Chatbot(config=config, conversation_id=None)
         return True
@@ -185,7 +185,7 @@ The server responded with an error: `{}`".format(
         await ctx.author.send(
             "Ok, I'll use that token from now on. Trying to start the bot..."
         )
-        if self._start_chatbot():
+        if self._start_chatbot(self.chat_token):
             await ctx.author.send("Success!")
         else:
             await ctx.author.send("Failed to start the bot. Get help!")
