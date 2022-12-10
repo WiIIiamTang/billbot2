@@ -32,6 +32,7 @@ class CustomPics(commands.Cog):
         self.chat_token = os.getenv("SESSION_TOKEN", None)
         self.chatbot = None
         self.min_chat_waittime = 10
+        self.conv_length = 0
         if not self._start_chatbot():
             raise RuntimeError(
                 "Chatbot failed to start. At cog: CustomPics. Double check session token."
@@ -155,6 +156,7 @@ The server responded with an error: `{}`".format(
             )
 
         self.chatbot.reset_chat()
+        self.conv_length = 0
 
     # TODO: Can we remove this? It won't work because the message exceeds the free limit of 2000 characters
 
@@ -205,6 +207,7 @@ The server responded with an error: `{}`".format(
                     i for i in self.listening_to if i["user"] != message.author
                 ]
                 self.chatbot.reset_chat()
+                self.conv_length = 0
                 return
             # Do not respond if it's been less than min_chat_waittime seconds since the last message
             elif (
@@ -232,14 +235,25 @@ If you want to end the chat session, type `.stopchat`.".format(
 
                 if response_length <= 1990:
                     await message.channel.send(response)
+                    self.conv_length += 1
                 else:
                     while response_length > 0:
                         await message.channel.send(response[:1990])
+                        self.conv_length += 1
                         response = response[1990:]
                         response_length -= 1990
             except Exception as e:
                 await message.channel.send("Something went wrong: {}".format(e))
                 await message.channel.send(
-                    "One problem is that conversation has a max length.\
+                    "One problem is that conversation has a max length. \
 Try .stopchat then .startchat to reset the conversation."
                 )
+                if self.conv_length < 5:
+                    # Get the bot owner Member
+                    owner = self.bot.fetch_user(os.getenv("OWNER_ID", None))
+                    await message.channel.send(
+                        "Hey {}, the conversation length is < 5 so it doesn't seem to be the issue. \n\
+Can you reset my session token?".format(
+                            owner
+                        )
+                    )
