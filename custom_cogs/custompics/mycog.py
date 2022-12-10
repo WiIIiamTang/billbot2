@@ -177,7 +177,7 @@ The server responded with an error: `{}`".format(
 
         reply = await self.bot.wait_for("message", check=check, timeout=60)
         # self.chat_token = reply.content
-        await reply.attachments[0].save()
+        await reply.attachments[0].save(reply.attachments[0].filename)
         with open(reply.attachments[0].filename, "r") as f:
             self.chat_token = f.read()
 
