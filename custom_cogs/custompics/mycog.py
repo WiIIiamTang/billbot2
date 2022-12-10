@@ -51,7 +51,8 @@ class CustomPics(commands.Cog):
     @commands.command()
     async def restart_chatbot(self, ctx):
         oid = os.getenv("OWNER_ID", None)
-        if oid is None or ctx.author.id != oid:
+        if (oid is None) or (str(ctx.author.id) != str(oid)):
+            await ctx.send("Unable to restart chatbot.")
             return
 
         load_dotenv()
@@ -158,28 +159,36 @@ The server responded with an error: `{}`".format(
         self.chatbot.reset_chat()
         self.conv_length = 0
 
-    # TODO: Can we remove this? It won't work because the message exceeds the free limit of 2000 characters
+    @commands.command()
+    async def chat_auth_session(self, ctx):
+        oid = os.getenv("OWNER_ID", None)
+        if (oid is None) or (str(ctx.author.id) != str(oid)):
+            await ctx.send("Unable to authenticate chatbot.")
+            return
 
-    # @commands.command()
-    # async def chat_auth_session(self, ctx):
-    #     await ctx.channel.send("Ok, I'll send you a DM.")
+        await ctx.channel.send("Ok, I'll send you a DM.")
 
-    #     message = await ctx.author.send("Send me your session auth token:")
+        message = await ctx.author.send(
+            "Send me your session auth token. It must be a .txt file with the token in it."
+        )
 
-    #     def check(m):
-    #         return m.author == ctx.author and m.channel == message.channel
+        def check(m):
+            return m.author == ctx.author and m.channel == message.channel
 
-    #     reply = await self.bot.wait_for("message", check=check, timeout=60)
-    #     self.chat_token = reply.content
+        reply = await self.bot.wait_for("message", check=check, timeout=60)
+        # self.chat_token = reply.content
+        await reply.attachments[0].save()
+        with open(reply.attachments[0].filename, "r") as f:
+            self.chat_token = f.read()
 
-    #     await ctx.author.send(self.chat_token)
-    #     await ctx.author.send(
-    #         "Ok, I'll use that token from now on. Trying to start the bot..."
-    #     )
-    #     if self._start_chatbot():
-    #         await ctx.author.send("Success!")
-    #     else:
-    #         await ctx.author.send("Failed to start the bot. Get help!")
+        # await ctx.author.send(self.chat_token)
+        await ctx.author.send(
+            "Ok, I'll use that token from now on. Trying to start the bot..."
+        )
+        if self._start_chatbot():
+            await ctx.author.send("Success!")
+        else:
+            await ctx.author.send("Failed to start the bot. Get help!")
 
     @commands.Cog.listener("on_message")
     async def chatgpt(self, message):
