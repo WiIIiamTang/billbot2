@@ -178,10 +178,13 @@ The server responded with an error: `{}`".format(
 
         reply = await self.bot.wait_for("message", check=check, timeout=60)
         # self.chat_token = reply.content
-        await reply.attachments[0].save("/app/key.txt")
-        asyncio.sleep(1)
-        with open("/app/key.txt", "r") as f:
-            self.chat_token = f.read()
+        # await reply.attachments[0].save("/app/key.txt")
+        fp = BytesIO()
+        await reply.attachments[0].save(fp)
+        await asyncio.sleep(1)
+        self.chat_token = fp.getvalue().decode("utf-8").strip()
+        # with open("/app/key.txt", "r") as f:
+        #     self.chat_token = f.read()
 
         # await ctx.author.send(self.chat_token)
         await ctx.author.send(
