@@ -2,6 +2,7 @@ from redbot.core import commands
 from io import BytesIO
 import sys
 import os
+import asyncio
 from asyncChatGPT.asyncChatGPT import Chatbot
 from datetime import datetime
 from dotenv import load_dotenv
@@ -177,8 +178,9 @@ The server responded with an error: `{}`".format(
 
         reply = await self.bot.wait_for("message", check=check, timeout=60)
         # self.chat_token = reply.content
-        await reply.attachments[0].save(reply.attachments[0].filename)
-        with open(reply.attachments[0].filename, "r") as f:
+        await reply.attachments[0].save("/app/key.txt")
+        asyncio.sleep(1)
+        with open("/app/key.txt", "r") as f:
             self.chat_token = f.read()
 
         # await ctx.author.send(self.chat_token)
