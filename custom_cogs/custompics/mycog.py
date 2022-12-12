@@ -264,7 +264,7 @@ Try .stopchat then .startchat to reset the conversation."
                 )
                 if self.conv_length < 5:
                     # Get the bot owner Member
-                    owner = self.bot.fetch_user(os.getenv("OWNER_ID", None))
+                    owner = await self.bot.fetch_user(os.getenv("OWNER_ID", None))
                     await message.channel.send(
                         "Hey {}, the conversation length is < 5 so it doesn't seem to be the issue. \n\
 Can you reset my session token?".format(
