@@ -3,7 +3,7 @@ from io import BytesIO
 import sys
 import os
 import asyncio
-from asyncChatGPT.asyncChatGPT import Chatbot
+from revChatGPT.revChatGPT import AsyncChatbot as Chatbot
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -37,10 +37,13 @@ class CustomPics(commands.Cog):
         self.min_chat_waittime = 10
         self.conv_length = 0
         self.allowed_users = []
-        if not self._start_chatbot():
-            raise RuntimeError(
-                "Chatbot failed to start. At cog: CustomPics. Double check session token."
-            )
+        if os.getenv("OWNER_ID", None) is not None:
+            self.allowed_users.append(os.getenv("OWNER_ID", None))
+
+        # if not self._start_chatbot():
+        #     raise RuntimeError(
+        #         "Chatbot failed to start. At cog: CustomPics. Double check session token."
+        #     )
 
     def _start_chatbot(self, token=None, cf_clearance=None, user_agent=None):
         if self.chat_token is None and token is None:
@@ -142,7 +145,7 @@ The server responded with an error: `{}`".format(
         #     )
         # )
         await ctx.send(
-            "Hey {}, this command shouldn't be used anymore.\n\
+            "Hey {}, you can't use this anymore! Do `.stopchat` to stop.\n\
 Cloudflare was recently added to the chatGPT site, which prevents a lot of botting.\n\
 You should wait for an official API to be released before using this, sorry.\n\
 Developers: **If you have a valid session token and a cloudflare clearance token, you can use `.chat_auth_session` to authenticate first, then run this command again.**".format(  # noqa: E501
@@ -152,6 +155,10 @@ Developers: **If you have a valid session token and a cloudflare clearance token
 
     @commands.command()
     async def add_allowed_user(self, ctx, id: str):
+        oid = os.getenv("OWNER_ID", None)
+        if (oid is None) or (str(ctx.author.id) != str(oid)):
+            return
+
         if id not in self.allowed_users:
             self.allowed_users.append(str(id))
             await ctx.send("Added {} to allowed users.".format(id))
@@ -220,7 +227,7 @@ Enter `cancel` to cancel."
         self.cf_clearance = lines[1].strip()
         self.user_agent = lines[2].strip()
         await ctx.author.send(
-            f"{self.chat_token}\n{self.cf_clearance}\n{self.user_agent}"
+            f"{self.chat_token[:100]}...\n{self.cf_clearance}\n{self.user_agent}"
         )
         # with open("/app/key.txt", "r") as f:
         #     self.chat_token = f.read()
