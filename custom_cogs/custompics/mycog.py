@@ -31,20 +31,25 @@ class CustomPics(commands.Cog):
         self.gel = booru.Gelbooru()
         self.listening_to = []
         self.chat_token = os.getenv("SESSION_TOKEN", None)
+        self.cf_clearance = os.getenv("CF_CLEARANCE", None)
+        self.user_agent = os.getenv("USER_AGENT", None)
         self.chatbot = None
         self.min_chat_waittime = 10
         self.conv_length = 0
+        self.allowed_users = []
         if not self._start_chatbot():
             raise RuntimeError(
                 "Chatbot failed to start. At cog: CustomPics. Double check session token."
             )
 
-    def _start_chatbot(self, token=None):
+    def _start_chatbot(self, token=None, cf_clearance=None, user_agent=None):
         if self.chat_token is None and token is None:
             return False
 
         config = {
             "session_token": self.chat_token if token is None else token,
+            "cf_clearance": self.cf_clearance if cf_clearance is None else cf_clearance,
+            "user_agent": self.user_agent if user_agent is None else user_agent,
         }
         self.chatbot = Chatbot(config=config, conversation_id=None)
         return True
@@ -59,9 +64,7 @@ class CustomPics(commands.Cog):
         load_dotenv()
         self.chat_token = os.getenv("SESSION_TOKEN", None)
         if not self._start_chatbot():
-            raise RuntimeError(
-                "Chatbot failed to start. At cog: CustomPics. Double check session token."
-            )
+            raise RuntimeError("Chatbot failed to start. At cog: CustomPics.")
         else:
             await ctx.send("Chatbot restarted.")
 
@@ -133,11 +136,27 @@ The server responded with an error: `{}`".format(
             {"user": ctx.author, "time": datetime.now(), "first": True}
         )
 
+        # await ctx.send(
+        #     "Ok, {}! I'll listen to your messages. Type `.stopchat` to stop. You'll be timed out after 5 minutes".format(
+        #         ctx.author.mention
+        #     )
+        # )
         await ctx.send(
-            "Ok, {}! I'll listen to your messages. Type `.stopchat` to stop. You'll be timed out after 5 minutes".format(
+            "Hey {}, this command shouldn't be used anymore.\n\
+Cloudflare was recently added to the chatGPT site, which prevents a lot of botting.\n\
+You should wait for an official API to be released before using this, sorry.\n\
+Developers: **If you have a valid session token and a cloudflare clearance token, you can use `.chat_auth_session` to authenticate first, then run this command again.**".format(  # noqa: E501
                 ctx.author.mention
             )
         )
+
+    @commands.command()
+    async def add_allowed_user(self, ctx, id: str):
+        if id not in self.allowed_users:
+            self.allowed_users.append(str(id))
+            await ctx.send("Added {} to allowed users.".format(id))
+        else:
+            await ctx.send("{} is already an allowed user.".format(id))
 
     @commands.command()
     async def stopchat(self, ctx):
@@ -163,34 +182,54 @@ The server responded with an error: `{}`".format(
     @commands.command()
     async def chat_auth_session(self, ctx):
         oid = os.getenv("OWNER_ID", None)
-        if (oid is None) or (str(ctx.author.id) != str(oid)):
+        if (
+            (oid is None)
+            or (str(ctx.author.id) != str(oid))
+            or (str(ctx.author.id) not in self.allowed_users)
+        ):
             await ctx.send("Unable to authenticate chatbot.")
             return
 
         await ctx.channel.send("Ok, I'll send you a DM.")
 
         message = await ctx.author.send(
-            "Send me your session auth token. It must be a .txt file with the token in it."
+            "Send me your session auth token, cloudflare clearance and user agent.\n\
+It must be a .txt file. The session auth token must be first, then the cloudflare clearance token, then user agent.\n\
+By making these changes, you are modifying the entire bot instance and can cause it to break.\n\
+Enter `cancel` to cancel."
         )
 
         def check(m):
             return m.author == ctx.author and m.channel == message.channel
 
         reply = await self.bot.wait_for("message", check=check, timeout=60)
+
+        # Cancel if the reply says cancel
+        if reply.content.lower() == "cancel":
+            await ctx.author.send("Cancelled.")
+            return
+
         # self.chat_token = reply.content
         # await reply.attachments[0].save("/app/key.txt")
         fp = BytesIO()
         await reply.attachments[0].save(fp)
         await asyncio.sleep(1)
-        self.chat_token = fp.getvalue().decode("utf-8").strip()
+        response = fp.getvalue().decode("utf-8")
+        lines = response.split("\n")
+        self.chat_token = lines[0].strip()
+        self.cf_clearance = lines[1].strip()
+        self.user_agent = lines[2].strip()
+        await ctx.author.send(
+            f"{self.chat_token}\n{self.cf_clearance}\n{self.user_agent}"
+        )
         # with open("/app/key.txt", "r") as f:
         #     self.chat_token = f.read()
 
         # await ctx.author.send(self.chat_token)
         await ctx.author.send(
-            "Ok, I'll use that token from now on. Trying to start the bot..."
+            "Ok, I'll use those settings from now on. Trying to start the bot..."
         )
-        if self._start_chatbot(self.chat_token):
+        if self._start_chatbot(self.chat_token, self.cf_clearance, self.user_agent):
             await ctx.author.send("Success!")
         else:
             await ctx.author.send("Failed to start the bot. Get help!")
