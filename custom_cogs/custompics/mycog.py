@@ -64,13 +64,11 @@ class CustomPics(commands.Cog):
     async def health_check_task(self):
         url = os.getenv("HEALTH_CHECK_URL", None)
         channel_id = os.getenv("HEALTH_CHECK_CHANNEL_ID", None)
-        owner = self.bot.fetch_user(int(os.getenv("OWNER_ID", None)))
+        owner = await self.bot.fetch_user(int(os.getenv("OWNER_ID", None)))
         if url is None or owner is None or channel_id is None:
             return
 
-        channel = (
-            self.bot.fetch_channel(int(channel_id)) if channel_id is not None else owner
-        )
+        channel = await self.bot.fetch_channel(int(channel_id))
 
         try:
             r = requests.get(url, timeout=self.timeout)
