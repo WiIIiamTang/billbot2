@@ -1,4 +1,5 @@
 from redbot.core import commands
+from discord.ext import tasks
 from io import BytesIO
 import sys
 import os
@@ -38,13 +39,21 @@ class CustomPics(commands.Cog):
         self.min_chat_waittime = 10
         self.conv_length = 0
         self.allowed_users = []
+        self.delete_message_from_these_users = []
+        self.messages_to_delete = []
+        self.min_delete_time = 15
         if os.getenv("OWNER_ID", None) is not None:
             self.allowed_users.append(os.getenv("OWNER_ID", None))
+
+        self.delete_messages_task.start()
 
         # if not self._start_chatbot():
         #     raise RuntimeError(
         #         "Chatbot failed to start. At cog: CustomPics. Double check session token."
         #     )
+
+    def cog_unload(self):
+        self.delete_messages_task.cancel()
 
     # def _start_chatbot(self, token=None, cf_clearance=None, user_agent=None):
     #     if self.chat_token is None and token is None:
@@ -130,6 +139,70 @@ The server responded with an error: `{}`".format(
                 )
             return
         await ctx.send(data["img_url"])
+
+    @commands.command(
+        help="Delete your messages after a certain amount of SECONDS, minimum 15. May be delayed by up to 15 seconds."
+    )
+    async def auto_delete(self, ctx, *, wait_time: int):
+        try:
+            wait_time = int(wait_time)
+        except ValueError:
+            await ctx.send("Please provide a valid integer.")
+            return
+
+        if wait_time < self.min_delete_time:
+            await ctx.send(f"Please provide an integer above {self.min_delete_time}.")
+            return
+
+        existing_user_info = [
+            x for x in self.delete_message_from_these_users if x["id"] == ctx.author.id
+        ]
+        if len(existing_user_info) > 0:
+            existing_user_info[0]["time"] = wait_time
+        else:
+            self.delete_message_from_these_users.append(
+                {"id": ctx.author.id, "time": wait_time}
+            )
+
+        await ctx.send(
+            "Added/Updated. Your messages will auto-delete after {} seconds.\n\
+Deletion may be delayed by up to 15 seconds. Your messages are *not* saved past deletion.\n\
+Run `.auto_delete_remove` to stop auto deleting.".format(
+                wait_time
+            )
+        )
+
+    @commands.command()
+    async def auto_delete_remove(self, ctx):
+        self.delete_message_from_these_users = [
+            x for x in self.delete_message_from_these_users if x["id"] != ctx.author.id
+        ]
+        await ctx.send("Removed")
+
+    @commands.Cog.listener("on_message")
+    async def auto_delete_bot(self, message):
+        if message.author.bot:
+            return
+
+        ids_to_check = [x["id"] for x in self.delete_message_from_these_users]
+        if message.author.id not in ids_to_check:
+            return
+
+        self.messages_to_delete.append({"message": message, "time": datetime.now()})
+
+    @tasks.loop(seconds=15)
+    async def delete_messages_task(self):
+        tmp = self.messages_to_delete.copy()
+        for x in tmp:
+            author = x["message"].author
+            message_time = x["time"]
+            wait_time = [
+                x for x in self.delete_message_from_these_users if x["id"] == author.id
+            ][0]["time"]
+
+            if (datetime.now() - message_time).total_seconds() >= wait_time:
+                await x["message"].delete()
+                self.messages_to_delete.remove(x)
 
     @commands.command(help="You can't use this anymore")
     async def startchat(self, ctx):
