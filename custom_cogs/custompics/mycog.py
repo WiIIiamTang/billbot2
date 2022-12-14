@@ -1,6 +1,7 @@
 from redbot.core import commands
 from discord.ext import tasks
 from io import BytesIO
+import requests
 import sys
 import os
 
@@ -38,14 +39,17 @@ class CustomPics(commands.Cog):
         self.chatbot = None
         self.min_chat_waittime = 10
         self.conv_length = 0
+        self.timeout = 1
         self.allowed_users = []
         self.delete_message_from_these_users = []
         self.messages_to_delete = []
+        self.response_times = []
         self.min_delete_time = 15
         if os.getenv("OWNER_ID", None) is not None:
             self.allowed_users.append(os.getenv("OWNER_ID", None))
 
         self.delete_messages_task.start()
+        self.health_check_task.start()
 
         # if not self._start_chatbot():
         #     raise RuntimeError(
@@ -54,6 +58,49 @@ class CustomPics(commands.Cog):
 
     def cog_unload(self):
         self.delete_messages_task.cancel()
+        self.health_check_task.cancel()
+
+    @tasks.loop(seconds=60)
+    async def health_check_task(self):
+        url = os.getenv("HEALTH_CHECK_URL", None)
+        channel_id = os.getenv("HEALTH_CHECK_CHANNEL_ID", None)
+        owner = self.bot.fetch_user(int(os.getenv("OWNER_ID", None)))
+        if url is None or owner is None or channel_id is None:
+            return
+
+        channel = (
+            self.bot.fetch_channel(int(channel_id)) if channel_id is not None else owner
+        )
+
+        try:
+            r = requests.get(url, timeout=self.timeout)
+        except requests.exceptions.Timeout:
+            await channel.send(
+                "{}, my scheduled health check timed out, with a limit of {}ms\n\
+I might be forcefully restarted soon - reload my cogs if that happens please".format(
+                    owner.mention, self.timeout * 1000
+                )
+            )
+        else:
+            if r.status_code != 200:
+                await channel.send(
+                    "{}, my scheduled health check failed, with a timeout limit of {}ms\n\
+Response code: {}. I might be forcefully restarted soon - reload my cogs if that happens please".format(
+                        owner.mention, self.timeout * 1000, r.status_code
+                    )
+                )
+
+            self.response_times.append(r.elapsed.total_seconds() * 1000)
+            if len(self.response_times) > 100:
+                self.response_times.pop(0)
+
+    @commands.command()
+    async def ping_stats(self, ctx):
+        await ctx.send(
+            "Average response time: {}ms".format(
+                sum(self.response_times) / len(self.response_times)
+            )
+        )
 
     # def _start_chatbot(self, token=None, cf_clearance=None, user_agent=None):
     #     if self.chat_token is None and token is None:
