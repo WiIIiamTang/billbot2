@@ -45,6 +45,8 @@ class CustomPics(commands.Cog):
         self.messages_to_delete = []
         self.response_times = []
         self.min_delete_time = 15
+        self.hchannel = None
+        self.owner = None
         if os.getenv("OWNER_ID", None) is not None:
             self.allowed_users.append(os.getenv("OWNER_ID", None))
 
@@ -60,15 +62,24 @@ class CustomPics(commands.Cog):
         self.delete_messages_task.cancel()
         self.health_check_task.cancel()
 
-    @tasks.loop(seconds=60)
+    @tasks.loop(seconds=30)
     async def health_check_task(self):
         url = os.getenv("HEALTH_CHECK_URL", None)
         channel_id = os.getenv("HEALTH_CHECK_CHANNEL_ID", None)
-        owner = await self.bot.fetch_user(int(os.getenv("OWNER_ID", None)))
+        if self.owner is None:
+            owner = await self.bot.fetch_user(int(os.getenv("OWNER_ID", None)))
+            self.owner = owner
+        else:
+            owner = self.owner
+
         if url is None or owner is None or channel_id is None:
             return
 
-        channel = await self.bot.fetch_channel(int(channel_id))
+        if self.hchannel is None:
+            channel = await self.bot.fetch_channel(int(channel_id))
+            self.hchannel = channel
+        else:
+            channel = self.hchannel
 
         try:
             r = requests.get(url, timeout=self.timeout)
@@ -96,7 +107,7 @@ Response code: {}. I might be forcefully restarted soon - reload my cogs if that
     async def ping_stats(self, ctx):
         await ctx.send(
             "Average response time: {}ms".format(
-                sum(self.response_times) / len(self.response_times)
+                round(sum(self.response_times) / len(self.response_times), 2)
             )
         )
 
