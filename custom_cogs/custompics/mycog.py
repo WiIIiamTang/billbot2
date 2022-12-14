@@ -250,15 +250,20 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
     async def delete_messages_task(self):
         tmp = self.messages_to_delete.copy()
         for x in tmp:
-            author = x["message"].author
-            message_time = x["time"]
-            wait_time = [
-                x for x in self.delete_message_from_these_users if x["id"] == author.id
-            ][0]["time"]
+            try:
+                author = x["message"].author
+                message_time = x["time"]
+                wait_time = [
+                    x
+                    for x in self.delete_message_from_these_users
+                    if x["id"] == author.id
+                ][0]["time"]
 
-            if (datetime.now() - message_time).total_seconds() >= wait_time:
-                await x["message"].delete()
-                self.messages_to_delete.remove(x)
+                if (datetime.now() - message_time).total_seconds() >= wait_time:
+                    await x["message"].delete()
+                    self.messages_to_delete.remove(x)
+            except IndexError:
+                pass
 
     @commands.command(help="You can't use this anymore")
     async def startchat(self, ctx):
