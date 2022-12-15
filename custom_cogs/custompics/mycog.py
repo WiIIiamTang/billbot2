@@ -39,7 +39,7 @@ class CustomPics(commands.Cog):
         self.chatbot = None
         self.min_chat_waittime = 10
         self.conv_length = 0
-        self.timeout = 1
+        self.timeout = 2
         self.allowed_users = []
         self.delete_message_from_these_users = []
         self.messages_to_delete = []
