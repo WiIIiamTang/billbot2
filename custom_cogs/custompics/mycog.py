@@ -86,15 +86,15 @@ class CustomPics(commands.Cog):
         except requests.exceptions.Timeout:
             await channel.send(
                 "{}, my scheduled health check timed out, with a limit of {}ms\n\
-I might be forcefully restarted soon - reload my cogs if that happens please".format(
+The container will be forcefully restarted soon, so I won't have my functionalities - reload my cogs please".format(
                     owner.mention, self.timeout * 1000
                 )
             )
         else:
             if r.status_code != 200:
                 await channel.send(
-                    "{}, my scheduled health check failed, with a timeout limit of {}ms\n\
-Response code: {}. I might be forcefully restarted soon - reload my cogs if that happens please".format(
+                    "{}, my scheduled health check failed, with a timeout limit of {}ms. Response code: {}.\n\
+The container will be forcefully restarted soon, so I won't have my functionalities - reload my cogs please".format(
                         owner.mention, self.timeout * 1000, r.status_code
                     )
                 )
