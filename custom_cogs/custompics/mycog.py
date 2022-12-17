@@ -69,7 +69,7 @@ class CustomPics(commands.Cog):
 
     @commands.Cog.listener("on_message")
     async def track_message_stat(self, message):
-        if message.author.bot or message.content.startswith(os.getenv("PREFIX")):
+        if message.author.bot or message.content.startswith("."):
             return
 
         if self.main_server is None:
