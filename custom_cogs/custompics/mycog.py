@@ -47,11 +47,11 @@ class CustomPics(commands.Cog):
 
         self.stats = {
             "tracking_since": datetime.now().strftime("%m/%d/%Y"),
-            "waifu": {"count": {"total": 0}, "count_by_users": {}},
-            "genshin": {"count": {"total": 0}, "count_by_users": {}},
-            "openai": {"count": {"total": 0}, "count_by_users": {}},
-            "wolfram": {"count": {"total": 0}, "count_by_users": {}},
-            "messages": {"count": {"total": 0}, "count_by_users": {}},
+            "waifu": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
+            "genshin": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
+            "openai": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
+            "wolfram": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
+            "messages": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
         }
 
         self.delete_messages_task.start()
@@ -60,10 +60,10 @@ class CustomPics(commands.Cog):
         self.delete_messages_task.cancel()
 
     def increment_count(self, category, channel, author):
-        stats_count = self.stats[category]["count"]
+        stats_count = self.stats[category]["count_by_channel"]
         stats_user = self.stats[category]["count_by_users"]
 
-        stats_count["total"] += 1
+        stats_count["_TOTAL"] += 1
         stats_count[channel.name] = stats_count.get(channel.name, 0) + 1
         stats_user[author.name] = stats_user.get(author.name, 0) + 1
 
@@ -78,7 +78,7 @@ class CustomPics(commands.Cog):
         # if message.guild.id != self.main_server.id:
         #     return
 
-        self.increment_count("message", message.channel, message.author)
+        self.increment_count("messages", message.channel, message.author)
 
     @commands.command()
     async def stats(self, ctx):
