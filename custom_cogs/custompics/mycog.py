@@ -75,8 +75,8 @@ class CustomPics(commands.Cog):
         if self.main_server is None:
             self.main_server = await self.bot.fetch_guild(os.getenv("SERVER_ID", None))
 
-        # if message.guild.id != self.main_server.id:
-        #     return
+        if message.guild.id != self.main_server.id:
+            return
 
         self.increment_count("messages", message.channel, message.author)
 
