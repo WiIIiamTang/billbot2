@@ -1,5 +1,7 @@
 # Docker build
 
+[![release image](https://github.com/WiIIiamTang/billbot2/actions/workflows/docker_build.yml/badge.svg)](https://github.com/WiIIiamTang/billbot2/actions/workflows/docker_build.yml)
+
 ```
 docker build -t imagetag .
 ```
@@ -10,12 +12,14 @@ Or from docker-compose (preferred),
 docker-compose up --force-recreate --build
 ```
 
-Two environment variables are required:
+Environment variables are required:
 
-- `TOKEN`: discord bot token
-- `PREFIX`: command prefix
-
-The http server is exposed on port 5000 by default inside the container, and is accessed locally through port 8000. `/` returns 403 Forbidden, `/ack/health` returns 200 OK for scheduled checks to ping.
+- `TOKEN`
+- `PREFIX`
+- `RUNTIME_ENV`
+- `WOLFRAM_APPID`
+- `OPENAI_API_KEY`
+- `OWNER_ID`
 
 ## Tests
 

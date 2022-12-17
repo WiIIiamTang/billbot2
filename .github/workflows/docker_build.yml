@@ -1,18 +1,31 @@
-# name: Docker Image CI
+name: Docker release
 
-# on:
-#   push:
-#     branches: ["main"]
-#   pull_request:
-#     branches: ["main"]
+on:
+  push:
+    branches: ["dev"]
+  pull_request:
+    branches: ["dev"]
 
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-#     steps:
-#       - uses: actions/checkout@v3
-#       - name: Build the Docker image
-#         run: docker build . --file Dockerfile --tag billbot2
-#       - name: Run tests inside container
-#         run: docker run -e RUNTIME_ENV='docker' -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} billbot2 pytest -p no:warnings
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag billbot2
+      - name: Run tests inside container
+        run: docker run -e RUNTIME_ENV='docker' -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} billbot2 pytest -p no:warnings
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Merge dev to release
+        uses: devmasx/merge-branch@master
+        with:
+          type: now
+          from_branch: dev
+          target_branch: docker-release
+          github_token: ${{ github.token }}
