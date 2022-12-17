@@ -59,7 +59,10 @@ class CustomPics(commands.Cog):
     def cog_unload(self):
         self.delete_messages_task.cancel()
 
-    def increment_count(self, category, channel, author, guild):
+    async def increment_count(self, category, channel, author, guild):
+        if self.main_server is None:
+            self.main_server = await self.bot.fetch_guild(os.getenv("SERVER_ID", None))
+
         if guild.id != self.main_server.id:
             return
 
@@ -75,10 +78,9 @@ class CustomPics(commands.Cog):
         if message.author.bot or message.content.startswith("."):
             return
 
-        if self.main_server is None:
-            self.main_server = await self.bot.fetch_guild(os.getenv("SERVER_ID", None))
-
-        self.increment_count("messages", message.channel, message.author, message.guild)
+        await self.increment_count(
+            "messages", message.channel, message.author, message.guild
+        )
 
     @commands.command()
     async def stats(self, ctx):
@@ -92,13 +94,13 @@ class CustomPics(commands.Cog):
 
         r = get_wolfram_simple(" ".join(args))
         await ctx.send(file=discord.File(BytesIO(r.content), "wolfram.png"))
-        self.increment_count("wolfram", ctx.channel, ctx.author, ctx.guild)
+        await self.increment_count("wolfram", ctx.channel, ctx.author, ctx.guild)
 
     @commands.command()
     async def waifu(self, ctx: commands.Context):
         img = await get_waifu()
         await ctx.send(img)
-        self.increment_count("waifu", ctx.channel, ctx.author, ctx.guild)
+        await self.increment_count("waifu", ctx.channel, ctx.author, ctx.guild)
 
     @commands.command()
     async def genshin(self, ctx: commands.Context, *, query: str):
@@ -114,7 +116,7 @@ class CustomPics(commands.Cog):
             embed.set_footer(text=f"Tags: {' '.join(data['tags'].split(' ')[:10])} ...")
 
             await ctx.send(embed=embed)
-            self.increment_count("genshin", ctx.channel, ctx.author, ctx.guild)
+            await self.increment_count("genshin", ctx.channel, ctx.author, ctx.guild)
         except ValueError as e:
             await ctx.send(f"Error: `{e}`")
 
@@ -145,7 +147,7 @@ The server responded with an error: `{}`".format(
                 )
             return
         await ctx.send(data["img_url"])
-        self.increment_count("openai", ctx.channel, ctx.author, ctx.guild)
+        await self.increment_count("openai", ctx.channel, ctx.author, ctx.guild)
 
     @commands.command(
         help="Delete your messages after a certain amount of SECONDS, minimum 15. May be delayed by up to 15 seconds."
@@ -214,4 +216,6 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
                     await x["message"].delete()
                     self.messages_to_delete.remove(x)
             except IndexError:
+                pass
+            except discord.errors.HTTPException:
                 pass
