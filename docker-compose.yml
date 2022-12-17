@@ -5,9 +5,6 @@ services:
     build:
       context: .
     container_name: billbot
-    #restart: unless-stopped
-    ports:
-    - 8000:5000
     volumes:
     - ./data:/data
     environment:
@@ -16,7 +13,4 @@ services:
     - RUNTIME_ENV=${RUNTIME_ENV}
     - WOLFRAM_APPID=${WOLFRAM_APPID}
     - OPENAI_API_KEY=${OPENAI_API_KEY}
-    - SESSION_TOKEN=${SESSION_TOKEN}
     - OWNER_ID=${OWNER_ID}
-    - CF_CLEARANCE=${CF_CLEARANCE}
-    - USER_AGENT=${USER_AGENT}

@@ -20,7 +20,7 @@ The http server is exposed on port 5000 by default inside the container, and is 
 ## Tests
 
 ```
-docker run -e RUNTIME_ENV='docker' {imagetag} pytest -p no:warnings
+docker run -e RUNTIME_ENV='docker' -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} billbot2 pytest -p no:warnings
 ```
 
 Or locally,
