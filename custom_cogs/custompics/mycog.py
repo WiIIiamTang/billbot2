@@ -2,6 +2,7 @@ from redbot.core import commands
 from discord.ext import tasks
 from io import BytesIO
 import sys
+import json
 import os
 
 from datetime import datetime
@@ -45,12 +46,12 @@ class CustomPics(commands.Cog):
             self.allowed_users.append(os.getenv("OWNER_ID", None))
 
         self.stats = {
-            "waifu": {},
-            "genshin": {},
-            "openai": {},
-            "wolfram": {},
-            "auto_delete": {},
-            "messages": {"count": {}},
+            "tracking_since": datetime.now().strftime("%m/%d/%Y"),
+            "waifu": {"count": {"total": 0}, "count_by_users": {}},
+            "genshin": {"count": {"total": 0}, "count_by_users": {}},
+            "openai": {"count": {"total": 0}, "count_by_users": {}},
+            "wolfram": {"count": {"total": 0}, "count_by_users": {}},
+            "messages": {"count": {"total": 0}, "count_by_users": {}},
         }
 
         self.delete_messages_task.start()
@@ -58,24 +59,30 @@ class CustomPics(commands.Cog):
     def cog_unload(self):
         self.delete_messages_task.cancel()
 
+    def increment_count(self, category, channel, author):
+        stats_count = self.stats[category]["count"]
+        stats_user = self.stats[category]["count_by_users"]
+
+        stats_count["total"] += 1
+        stats_count[channel.name] = stats_count.get(channel.name, 0) + 1
+        stats_user[author.name] = stats_user.get(author.name, 0) + 1
+
     @commands.Cog.listener("on_message")
     async def track_message_stat(self, message):
-        if message.author.bot:
+        if message.author.bot or message.content.startswith(os.getenv("PREFIX")):
             return
 
         if self.main_server is None:
             self.main_server = await self.bot.fetch_guild(os.getenv("SERVER_ID", None))
 
-        if message.guild.id != self.main_server.id:
-            return
+        # if message.guild.id != self.main_server.id:
+        #     return
 
-        stats_count = self.stats["messages"]["count"]
-
-        stats_count[message.channel.name] = stats_count.get(message.channel.name, 0) + 1
+        self.increment_count("message", message.channel, message.author)
 
     @commands.command()
     async def stats(self, ctx):
-        await ctx.send("```\n{}\n```".format(self.stats))
+        await ctx.send("```\n{}\n```".format(json.dumps(self.stats, indent=4)))
 
     @commands.command()
     async def wolfram(self, ctx, *args):
@@ -85,11 +92,13 @@ class CustomPics(commands.Cog):
 
         r = get_wolfram_simple(" ".join(args))
         await ctx.send(file=discord.File(BytesIO(r.content), "wolfram.png"))
+        self.increment_count("wolfram", ctx.channel, ctx.author)
 
     @commands.command()
     async def waifu(self, ctx: commands.Context):
         img = await get_waifu()
         await ctx.send(img)
+        self.increment_count("waifu", ctx.channel, ctx.author)
 
     @commands.command()
     async def genshin(self, ctx: commands.Context, *, query: str):
@@ -105,6 +114,7 @@ class CustomPics(commands.Cog):
             embed.set_footer(text=f"Tags: {' '.join(data['tags'].split(' ')[:10])} ...")
 
             await ctx.send(embed=embed)
+            self.increment_count("genshin", ctx.channel, ctx.author)
         except ValueError as e:
             await ctx.send(f"Error: `{e}`")
 
@@ -135,6 +145,7 @@ The server responded with an error: `{}`".format(
                 )
             return
         await ctx.send(data["img_url"])
+        self.increment_count("openai", ctx.channel, ctx.author)
 
     @commands.command(
         help="Delete your messages after a certain amount of SECONDS, minimum 15. May be delayed by up to 15 seconds."
