@@ -1,54 +1,54 @@
-name: release
+# name: release
 
-on:
-  workflow_run:
-    workflows: ["Docker Image CI"]
-    types:
-      - completed
+# on:
+#   workflow_run:
+#     workflows: ["Docker Image CI"]
+#     types:
+#       - completed
 
-permissions:
-  contents: read
+# permissions:
+#   contents: read
 
-jobs:
-  # Otherwise, continue to build test and deploy
-  buildtest:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
+# jobs:
+#   # Otherwise, continue to build test and deploy
+#   buildtest:
+#     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+#     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v3
-        with:
-          python-version: "3.9"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install flake8 pytest
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Lint with flake8
-        run: |
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      - name: Test with pytest
-        run: |
-          pytest
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#     steps:
+#       - uses: actions/checkout@v3
+#       - name: Set up Python 3.9
+#         uses: actions/setup-python@v3
+#         with:
+#           python-version: "3.9"
+#       - name: Install dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install flake8 pytest
+#           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+#       - name: Lint with flake8
+#         run: |
+#           # stop the build if there are Python syntax errors or undefined names
+#           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+#           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+#           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+#       - name: Test with pytest
+#         run: |
+#           pytest
+#         env:
+#           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-  deploy:
-    needs: buildtest
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    steps:
-      - name: Deploy request
-        id: getreq
-        uses: fjogeleit/http-request-action@v1
-        with:
-          url: ${{ secrets.DEPLOY_HOOK }}
-          method: GET
+#   deploy:
+#     needs: buildtest
+#     runs-on: ubuntu-latest
+#     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+#     steps:
+#       - name: Deploy request
+#         id: getreq
+#         uses: fjogeleit/http-request-action@v1
+#         with:
+#           url: ${{ secrets.DEPLOY_HOOK }}
+#           method: GET
 
-      - name: Deploy response
-        run: echo ${{ steps.getreq.outputs.response }}
+#       - name: Deploy response
+#         run: echo ${{ steps.getreq.outputs.response }}

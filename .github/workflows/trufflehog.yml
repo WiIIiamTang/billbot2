@@ -2,9 +2,9 @@ name: Leaked Secrets Scan
 
 on:
   push:
-    branches: ["main"]
+    branches: ["*"]
   pull_request:
-    branches: ["main"]
+    branches: ["*"]
 
 jobs:
   TruffleHog:
