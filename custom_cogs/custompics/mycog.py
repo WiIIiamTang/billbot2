@@ -40,21 +40,42 @@ class CustomPics(commands.Cog):
         self.min_delete_time = 15
         self.hchannel = None
         self.owner = None
+        self.main_server = None
         if os.getenv("OWNER_ID", None) is not None:
             self.allowed_users.append(os.getenv("OWNER_ID", None))
+
+        self.stats = {
+            "waifu": {},
+            "genshin": {},
+            "openai": {},
+            "wolfram": {},
+            "auto_delete": {},
+            "messages": {"count": {}},
+        }
 
         self.delete_messages_task.start()
 
     def cog_unload(self):
         self.delete_messages_task.cancel()
 
+    @commands.Cog.listener("on_message")
+    async def track_message_stat(self, message):
+        if message.author.bot:
+            return
+
+        if self.main_server is None:
+            self.main_server = await self.bot.fetch_guild(os.getenv("SERVER_ID", None))
+
+        if message.guild.id != self.main_server.id:
+            return
+
+        stats_count = self.stats["messages"]["count"]
+
+        stats_count[message.channel.name] = stats_count.get(message.channel.name, 0) + 1
+
     @commands.command()
-    async def ping_stats(self, ctx):
-        await ctx.send(
-            "Average response time: {}ms".format(
-                round(sum(self.response_times) / len(self.response_times), 2)
-            )
-        )
+    async def stats(self, ctx):
+        await ctx.send("```\n{}\n```".format(self.stats))
 
     @commands.command()
     async def wolfram(self, ctx, *args):

@@ -20,6 +20,7 @@ Environment variables are required:
 - `WOLFRAM_APPID`
 - `OPENAI_API_KEY`
 - `OWNER_ID`
+- `SERVER_ID`
 
 ## Tests
 
