@@ -39,6 +39,7 @@ class CustomPics(commands.Cog):
         self.delete_message_from_these_users = []
         self.messages_to_delete = []
         self.response_times = []
+        self.tracking_users_in_channel = []
         self.min_delete_time = 15
         self.hchannel = None
         self.owner = None
@@ -54,6 +55,7 @@ class CustomPics(commands.Cog):
             "openai": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
             "wolfram": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
             "messages": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
+            "voice": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
         }
 
         self.sync_stats_from_db()
@@ -85,7 +87,9 @@ class CustomPics(commands.Cog):
 
         self.stats = new_stats
 
-    async def increment_count(self, category, channel, author, guild):
+    async def increment_count(
+        self, category, channel, author, guild, increment_value=1
+    ):
         if self.main_server is None:
             self.main_server = await self.bot.fetch_guild(os.getenv("SERVER_ID", None))
 
@@ -95,9 +99,9 @@ class CustomPics(commands.Cog):
         stats_count = self.stats[category]["count_by_channel"]
         stats_user = self.stats[category]["count_by_users"]
 
-        stats_count["_TOTAL"] += 1
-        stats_count[channel.name] = stats_count.get(channel.name, 0) + 1
-        stats_user[author.name] = stats_user.get(author.name, 0) + 1
+        stats_count["_TOTAL"] += increment_value
+        stats_count[channel.name] = stats_count.get(channel.name, 0) + increment_value
+        stats_user[author.name] = stats_user.get(author.name, 0) + increment_value
 
     @commands.Cog.listener("on_message")
     async def track_message_stat(self, message):
@@ -107,6 +111,35 @@ class CustomPics(commands.Cog):
         await self.increment_count(
             "messages", message.channel, message.author, message.guild
         )
+
+    @commands.Cog.listener("on_voice_state_update")
+    async def track_voice_stat(self, member, before, after):
+        members = [
+            x["user"] for x in self.tracking_users_in_channel if x["user"] == member
+        ]
+        if not members:
+            return
+
+        # Start tracking time if a user joins a voice channel
+        if before.channel is None and after.channel is not None:
+            self.tracking_users_in_channel.append(
+                {"user": member, "join_time": datetime.now()}
+            )
+        # Else, stop tracking time if a user leaves a voice channel
+        elif before.channel is not None and after.channel is None:
+            user = [x for x in self.tracking_users_in_channel if x["user"] == member][0]
+            self.tracking_users_in_channel = [
+                x for x in self.tracking_users_in_channel if x["user"] != member
+            ]
+            # Add the time passed to the stats in minutes
+            time_passed = datetime.now() - user["join_time"]
+            await self.increment_count(
+                "voice",
+                before.channel,
+                member,
+                member.guild,
+                round(time_passed.total_seconds() / 60, 2),
+            )
 
     @commands.command()
     async def stats(self, ctx):
