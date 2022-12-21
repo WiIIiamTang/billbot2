@@ -4,6 +4,7 @@ from io import BytesIO
 import sys
 import json
 import os
+import pymongo
 
 from datetime import datetime
 from dotenv import load_dotenv
@@ -42,6 +43,7 @@ class CustomPics(commands.Cog):
         self.hchannel = None
         self.owner = None
         self.main_server = None
+        self.mongo_client = pymongo.MongoClient(os.getenv("MONGO_DB_URI", None))
         if os.getenv("OWNER_ID", None) is not None:
             self.allowed_users.append(os.getenv("OWNER_ID", None))
 
@@ -54,10 +56,34 @@ class CustomPics(commands.Cog):
             "messages": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
         }
 
+        self.sync_stats_from_db()
+
         self.delete_messages_task.start()
+        self.sync_stats_task.start()
 
     def cog_unload(self):
         self.delete_messages_task.cancel()
+        self.sync_stats_task.cancel()
+
+    def sync_stats_from_db(self):
+        db = self.mongo_client["billbot"]
+        stats_collection = db["stats"]
+        new_stats = {}
+        date = stats_collection.find_one({"category": "tracking_time"})
+        new_stats["tracking_since"] = date["tracking_since"]
+
+        # Get the stats from the database
+        for k, v in self.stats.items():
+            old = stats_collection.find_one({"category": k})
+
+            if old is None:
+                continue
+
+            new_stats[k] = {}
+            new_stats[k]["count_by_channel"] = old["count_by_channel"]
+            new_stats[k]["count_by_users"] = old["count_by_users"]
+
+        self.stats = new_stats
 
     async def increment_count(self, category, channel, author, guild):
         if self.main_server is None:
@@ -219,3 +245,26 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
                 pass
             except discord.errors.HTTPException:
                 pass
+
+    @tasks.loop(hours=24)
+    async def sync_stats_task(self):
+        db = self.mongo_client["billbot"]
+        stats_collection = db["stats"]
+
+        # Update the date in case it changed
+        stats_collection.update_one(
+            {"category": "tracking_time"},
+            {"tracking_since": self.stats["tracking_since"]},
+        )
+
+        # Update each of the categories in stats:
+        for k, v in self.stats.items():
+            old = stats_collection.find_one({"category": k})
+            if old is None:
+                continue
+
+            for k2, v2 in v.items():
+                for k3, v3 in v2.items():
+                    old[k2][k3] = v3
+
+            stats_collection.update_one({"category": k}, {"$set": old}, upsert=False)
