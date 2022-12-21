@@ -254,7 +254,14 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
         # Update the date in case it changed
         stats_collection.update_one(
             {"category": "tracking_time"},
-            {"tracking_since": self.stats["tracking_since"]},
+            {
+                "$set": {
+                    {
+                        "category": "tracking_time",
+                        "tracking_since": self.stats["tracking_since"],
+                    }
+                }
+            },
         )
 
         # Update each of the categories in stats:
