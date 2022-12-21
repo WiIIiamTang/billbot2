@@ -256,10 +256,8 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
             {"category": "tracking_time"},
             {
                 "$set": {
-                    {
-                        "category": "tracking_time",
-                        "tracking_since": self.stats["tracking_since"],
-                    }
+                    "category": "tracking_time",
+                    "tracking_since": self.stats["tracking_since"],
                 }
             },
         )
