@@ -15,3 +15,4 @@ services:
     - OPENAI_API_KEY=${OPENAI_API_KEY}
     - OWNER_ID=${OWNER_ID}
     - SERVER_ID=${SERVER_ID}
+    - MONGO_DB_URI=${MONGO_DB_URI}

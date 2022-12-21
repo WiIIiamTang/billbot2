@@ -32,5 +32,5 @@ python -m venv /data/venv
 
 echo "Activated env"
 echo "Installing additional requirements..."
-pip install requests asyncio booru==1.0.15 python-dotenv openai
+pip install requests asyncio booru==1.0.15 python-dotenv openai pymongo
 pip install revChatGPT --upgrade
