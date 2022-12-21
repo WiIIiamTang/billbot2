@@ -56,6 +56,7 @@ class CustomPics(commands.Cog):
             "wolfram": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
             "messages": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
             "voice": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
+            "audio": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
         }
 
         self.sync_stats_from_db()
@@ -114,12 +115,6 @@ class CustomPics(commands.Cog):
 
     @commands.Cog.listener("on_voice_state_update")
     async def track_voice_stat(self, member, before, after):
-        members = [
-            x["user"] for x in self.tracking_users_in_channel if x["user"] == member
-        ]
-        if not members:
-            return
-
         # Start tracking time if a user joins a voice channel
         if before.channel is None and after.channel is not None:
             self.tracking_users_in_channel.append(
@@ -139,6 +134,14 @@ class CustomPics(commands.Cog):
                 member,
                 member.guild,
                 round(time_passed.total_seconds() / 60, 2),
+            )
+
+    @commands.Cog.listener("on_message")
+    async def track_audio_stat(self, message):
+        content = message.content.lower()
+        if content.startswith(".p") or content.startswith(".play"):
+            await self.increment_count(
+                "audio", message.channel, message.author, message.guild
             )
 
     @commands.command()
