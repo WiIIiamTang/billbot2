@@ -174,7 +174,13 @@ class CustomPics(commands.Cog):
 
     @commands.command()
     async def stats(self, ctx):
-        await ctx.send("```\n{}\n```".format(json.dumps(self.stats, indent=4)))
+        formatted = json.dumps(self.stats, indent=2)
+        if len(formatted) > 1900:
+            while len(formatted) > 0:
+                await ctx.send("```\n{}\n```".format(formatted[:1900]))
+                formatted = formatted[1900:]
+        else:
+            await ctx.send("```\n{}\n```".format(formatted))
 
     @commands.command()
     async def wolfram(self, ctx, *args):
