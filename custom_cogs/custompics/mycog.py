@@ -40,6 +40,7 @@ class CustomPics(commands.Cog):
         self.messages_to_delete = []
         self.response_times = []
         self.tracking_users_in_channel = []
+        self.tracking_statuses = []
         self.min_delete_time = 15
         self.hchannel = None
         self.owner = None
@@ -57,6 +58,7 @@ class CustomPics(commands.Cog):
             "messages": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
             "voice": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
             "audio": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
+            "activity": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
         }
 
         self.sync_stats_from_db()
@@ -134,6 +136,34 @@ class CustomPics(commands.Cog):
                 member,
                 member.guild,
                 round(time_passed.total_seconds() / 60, 2),
+            )
+
+    @commands.Cog.listener("on_presence_update")
+    async def track_activity_stat(self, before, after):
+        # Start tracking time if a user changes their activity from none to something
+        if before.activity is None and after.activity is not None:
+            self.tracking_statuses.append(
+                {"user": after, "join_time": datetime.now(), "activity": after.activity}
+            )
+        # Else, stop tracking time if a user changes their activity from something to none
+        # Or when the activity is different
+        elif (before.activity is not None and after.activity is None) or (
+            before.activity is not None
+            and after.activity is not None
+            and before.activity != after.activity
+        ):
+            user = [x for x in self.tracking_statuses if x["user"] == after][0]
+            self.tracking_statuses = [
+                x for x in self.tracking_statuses if x["user"] != after
+            ]
+            # Add the time passed to the stats in minutes
+            time_passed = datetime.now() - user["join_time"]
+            minutes = round(time_passed.total_seconds() / 60, 2)
+
+            activity_stats = self.stats["activity"]["count_by_users"]
+            activity_stats[after.name] = activity_stats.get(after.name, {})
+            activity_stats[after.name][before.activity.name] = (
+                activity_stats[after.name].get(before.activity.name, 0) + minutes
             )
 
     @commands.Cog.listener("on_message")
@@ -282,7 +312,7 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
             except discord.errors.HTTPException:
                 pass
 
-    @tasks.loop(hours=24)
+    @tasks.loop(hours=12)
     async def sync_stats_task(self):
         db = self.mongo_client["billbot"]
         stats_collection = db["stats"]
