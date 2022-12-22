@@ -58,7 +58,7 @@ class CustomPics(commands.Cog):
             "messages": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
             "voice": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
             "audio": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
-            "activity": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
+            "status": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
         }
 
         self.sync_stats_from_db()
@@ -138,33 +138,31 @@ class CustomPics(commands.Cog):
                 round(time_passed.total_seconds() / 60, 2),
             )
 
-    @commands.Cog.listener("on_presence_update")
-    async def track_activity_stat(self, before, after):
-        # Start tracking time if a user changes their activity from none to something
-        if before.activity is None and after.activity is not None:
-            self.tracking_statuses.append(
-                {"user": after, "join_time": datetime.now(), "activity": after.activity}
-            )
-        # Else, stop tracking time if a user changes their activity from something to none
-        # Or when the activity is different
-        elif (before.activity is not None and after.activity is None) or (
-            before.activity is not None
-            and after.activity is not None
-            and before.activity != after.activity
-        ):
-            user = [x for x in self.tracking_statuses if x["user"] == after][0]
-            self.tracking_statuses = [
-                x for x in self.tracking_statuses if x["user"] != after
-            ]
+    @commands.Cog.listener("on_member_update")
+    async def track_status_stat(self, before, after):
+        if before.status == after.status:
+            return
+
+        user_info = [x for x in self.tracking_statuses if x["user"] == after]
+        if not user_info:
+            user_info = {"user": after, "status": after.status, "time": datetime.now()}
+            self.tracking_statuses.append(user_info)
+        else:
+            user_info = user_info[0]
             # Add the time passed to the stats in minutes
-            time_passed = datetime.now() - user["join_time"]
+            time_passed = datetime.now() - user_info["time"]
             minutes = round(time_passed.total_seconds() / 60, 2)
 
-            activity_stats = self.stats["activity"]["count_by_users"]
-            activity_stats[after.name] = activity_stats.get(after.name, {})
-            activity_stats[after.name][before.activity.name] = (
-                activity_stats[after.name].get(before.activity.name, 0) + minutes
+            stats = self.stats["status"]["count_by_users"]
+            stats[user_info["user"].name] = stats.get(user_info["user"].name, {})
+
+            user_stats_status = stats[user_info["user"].name]
+            user_stats_status[str(user_info["status"])] = (
+                user_stats_status.get(str(user_info["status"]), 0) + minutes
             )
+
+            user_info["status"] = after.status
+            user_info["time"] = datetime.now()
 
     @commands.Cog.listener("on_message")
     async def track_audio_stat(self, message):
