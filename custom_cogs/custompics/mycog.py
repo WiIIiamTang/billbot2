@@ -71,7 +71,7 @@ class CustomPics(commands.Cog):
 
         self.delete_messages_task.start()
         self.sync_stats_task.start()
-        self.sync_stats_archive_task()
+        self.sync_stats_archive_task.start()
 
     def cog_unload(self):
         self.delete_messages_task.cancel()
