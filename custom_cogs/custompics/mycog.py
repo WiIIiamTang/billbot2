@@ -41,6 +41,7 @@ class CustomPics(commands.Cog):
         self.response_times = []
         self.tracking_users_in_channel = []
         self.tracking_statuses = []
+        self.tracking_activities = []
         self.min_delete_time = 15
         self.hchannel = None
         self.owner = None
@@ -59,6 +60,7 @@ class CustomPics(commands.Cog):
             "voice": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
             "audio": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
             "status": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
+            "activity": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
         }
 
         self.sync_stats_from_db()
@@ -115,6 +117,19 @@ class CustomPics(commands.Cog):
             "messages", message.channel, message.author, message.guild
         )
 
+    @commands.command()
+    async def get_current_activities(self, ctx):
+        await ctx.send("{} | {}".format(ctx.author.activities, ctx.author.activity))
+
+    @commands.command()
+    async def force_db_sync(self, ctx):
+        owner = await self.bot.fetch_user(os.getenv("OWNER_ID", None))
+        if owner is None or ctx.author.id != owner.id:
+            return
+
+        await self.sync_stats_task()
+        await ctx.send("Done")
+
     @commands.Cog.listener("on_voice_state_update")
     async def track_voice_stat(self, member, before, after):
         # Start tracking time if a user joins a voice channel
@@ -140,6 +155,49 @@ class CustomPics(commands.Cog):
 
     @commands.Cog.listener("on_member_update")
     async def track_status_stat(self, before, after):
+        ###################################################################
+        # Activity updates
+        ###################################################################
+        # TODO: When discord.py updates to v2, move this to on_presence_update
+        if before.activities != after.activities:
+            user_info = [x for x in self.tracking_activities if x["user"] == after]
+            if not user_info:
+                if after.activity is not None:
+                    user_info = {
+                        "user": after,
+                        "activity": after.activity,
+                        "time": datetime.now(),
+                    }
+                    self.tracking_activities.append(user_info)
+            else:
+                user_info = user_info[0]
+                # Add the time passed to the stats in minutes
+                time_passed = datetime.now() - user_info["time"]
+                minutes = round(time_passed.total_seconds() / 60, 2)
+
+                stats = self.stats["activity"]["count_by_users"]
+                stats[user_info["activity"].name] = stats.get(
+                    user_info["activity"].name, {}
+                )
+                stats[user_info["activity"].name][user_info["user"].name] = (
+                    stats[user_info["activity"].name].get(user_info["user"].name, 0)
+                    + minutes
+                )
+                stats[user_info["activity"].name]["_TOTAL"] = (
+                    stats[user_info["activity"].name].get("_TOTAL", 0) + minutes
+                )
+
+                if after.activity is None:
+                    self.tracking_activities = [
+                        x for x in self.tracking_activities if x["user"] != after
+                    ]
+                else:
+                    user_info["activity"] = after.activity
+                    user_info["time"] = datetime.now()
+
+        ###################################################################
+        # Status updates
+        ###################################################################
         if before.status == after.status:
             return
 
