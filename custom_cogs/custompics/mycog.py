@@ -5,7 +5,7 @@ import sys
 import json
 import copy
 import os
-from nltk import word_tokenize
+from nltk import word_tokenize, download
 from string import punctuation
 import pymongo
 
@@ -73,6 +73,8 @@ class CustomPics(commands.Cog):
         self.sync_stats_task.start()
         self.sync_stats_archive_task.start()
 
+        download("punkt")
+
     def cog_unload(self):
         self.delete_messages_task.cancel()
         self.sync_stats_task.cancel()
@@ -128,7 +130,7 @@ class CustomPics(commands.Cog):
         if message.author.bot or message.content.startswith("."):
             return
 
-        content = message.content
+        content = message.content.lower()
         punc = list(punctuation)
         tokens = [
             s.strip("".join(punc)) for s in word_tokenize(content) if s not in punc
