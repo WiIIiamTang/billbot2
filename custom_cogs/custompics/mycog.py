@@ -159,7 +159,9 @@ class CustomPics(commands.Cog):
         # Activity updates
         ###################################################################
         # TODO: When discord.py updates to v2, move this to on_presence_update
-        if before.activities != after.activities:
+
+        # ignore if bot
+        if before.activities != after.activities and not after.bot:
             user_info = [x for x in self.tracking_activities if x["user"] == after]
             if not user_info:
                 if after.activity is not None:
