@@ -3,7 +3,10 @@ from discord.ext import tasks
 from io import BytesIO
 import sys
 import json
+import copy
 import os
+from nltk import word_tokenize
+from string import punctuation
 import pymongo
 
 from datetime import datetime
@@ -61,16 +64,19 @@ class CustomPics(commands.Cog):
             "audio": {"count_by_channel": {"_TOTAL": 0}, "count_by_users": {}},
             "status": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
             "activity": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
+            "words": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
         }
 
         self.sync_stats_from_db()
 
         self.delete_messages_task.start()
         self.sync_stats_task.start()
+        self.sync_stats_archive_task()
 
     def cog_unload(self):
         self.delete_messages_task.cancel()
         self.sync_stats_task.cancel()
+        self.sync_stats_archive_task.cancel()
 
     def sync_stats_from_db(self):
         db = self.mongo_client["billbot"]
@@ -117,6 +123,25 @@ class CustomPics(commands.Cog):
             "messages", message.channel, message.author, message.guild
         )
 
+    @commands.Cog.listener("on_message")
+    async def track_words_stat(self, message):
+        if message.author.bot or message.content.startswith("."):
+            return
+
+        content = message.content
+        punc = list(punctuation)
+        tokens = [
+            s.strip("".join(punc)) for s in word_tokenize(content) if s not in punc
+        ]
+
+        word_stats = self.stats["words"]["count_by_users"]
+        word_stats[message.author.name] = word_stats.get(message.author.name, {})
+
+        for token in tokens:
+            word_stats[message.author.name][token] = (
+                word_stats[message.author.name].get(token, 0) + 1
+            )
+
     @commands.command()
     async def get_current_activities(self, ctx):
         await ctx.send("{} | {}".format(ctx.author.activities, ctx.author.activity))
@@ -128,6 +153,15 @@ class CustomPics(commands.Cog):
             return
 
         await self.sync_stats_task()
+        await ctx.send("Done")
+
+    @commands.command()
+    async def force_db_archive_sync(self, ctx):
+        owner = await self.bot.fetch_user(os.getenv("OWNER_ID", None))
+        if owner is None or ctx.author.id != owner.id:
+            return
+
+        await self.sync_stats_archive_task()
         await ctx.send("Done")
 
     @commands.Cog.listener("on_voice_state_update")
@@ -375,6 +409,20 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
                 pass
             except discord.errors.HTTPException:
                 pass
+
+    @tasks.loop(hours=8)
+    async def sync_stats_archive_task(self):
+        db = self.mongo_client["billbot"]
+        stats_archive_collection = db["stats_archive"]
+
+        # Add the current date to the stats object
+        stats = copy.deepcopy(self.stats)
+        stats["date"] = datetime.now().strftime("%Y-%m-%d")
+
+        # Update the stats document, or create it if it doesn't exist
+        stats_archive_collection.update_one(
+            {"date": stats["date"]}, {"$set": stats}, upsert=True
+        )
 
     @tasks.loop(hours=12)
     async def sync_stats_task(self):
