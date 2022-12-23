@@ -214,15 +214,21 @@ class CustomPics(commands.Cog):
                 minutes = round(time_passed.total_seconds() / 60, 2)
 
                 stats = self.stats["activity"]["count_by_users"]
-                stats[user_info["activity"].name] = stats.get(
-                    user_info["activity"].name, {}
+
+                if user_info["activity"].name is None:
+                    activity_name = "Unknown"
+                else:
+                    activity_name = user_info["activity"].name
+
+                stats[user_info[activity_name]] = stats.get(
+                    user_info[activity_name], {}
                 )
-                stats[user_info["activity"].name][user_info["user"].name] = (
-                    stats[user_info["activity"].name].get(user_info["user"].name, 0)
+                stats[user_info[activity_name]][user_info["user"].name] = (
+                    stats[user_info[activity_name]].get(user_info["user"].name, 0)
                     + minutes
                 )
-                stats[user_info["activity"].name]["_TOTAL"] = (
-                    stats[user_info["activity"].name].get("_TOTAL", 0) + minutes
+                stats[user_info[activity_name]]["_TOTAL"] = (
+                    stats[user_info[activity_name]].get("_TOTAL", 0) + minutes
                 )
 
                 if after.activity is None:
@@ -270,7 +276,7 @@ class CustomPics(commands.Cog):
 
     @commands.command()
     async def stats(self, ctx):
-        formatted = json.dumps(self.stats, indent=2)
+        formatted = json.dumps(self.stats, indent=1)
         if len(formatted) > 1900:
             while len(formatted) > 0:
                 await ctx.send("```\n{}\n```".format(formatted[:1900]))
