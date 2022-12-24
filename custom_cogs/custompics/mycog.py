@@ -149,6 +149,22 @@ class CustomPics(commands.Cog):
             )
 
     @commands.command()
+    async def get_cog_cache(self, ctx):
+        cache_lists = {
+            "allowed_users": self.allowed_users,
+            "delete_messages": self.delete_message_from_these_users,
+            "messages_to_delete": self.messages_to_delete,
+            "tracking_users_in_channel": self.tracking_users_in_channel,
+            "tracking_statuses": self.tracking_statuses,
+            "tracking_activities": self.tracking_activities,
+        }
+
+        # Send the cache_lists str as a file since it will be too long as a normal message
+        # BytesIo is used to convert the string to a file
+        buffer = BytesIO(str(cache_lists).encode("utf-8"))
+        await ctx.send(file=discord.File(fp=buffer, filename="cache_lists.txt"))
+
+    @commands.command()
     async def get_current_activities(self, ctx):
         await ctx.send("{} | {}".format(ctx.author.activities, ctx.author.activity))
 
