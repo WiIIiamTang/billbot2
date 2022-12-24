@@ -220,15 +220,12 @@ class CustomPics(commands.Cog):
                 else:
                     activity_name = user_info["activity"].name
 
-                stats[user_info[activity_name]] = stats.get(
-                    user_info[activity_name], {}
+                stats[activity_name] = stats.get(activity_name, {})
+                stats[activity_name][user_info["user"].name] = (
+                    stats[activity_name].get(user_info["user"].name, 0) + minutes
                 )
-                stats[user_info[activity_name]][user_info["user"].name] = (
-                    stats[user_info[activity_name]].get(user_info["user"].name, 0)
-                    + minutes
-                )
-                stats[user_info[activity_name]]["_TOTAL"] = (
-                    stats[user_info[activity_name]].get("_TOTAL", 0) + minutes
+                stats[activity_name]["_TOTAL"] = (
+                    stats[activity_name].get("_TOTAL", 0) + minutes
                 )
 
                 if after.activity is None:
