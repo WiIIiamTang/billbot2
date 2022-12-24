@@ -154,20 +154,6 @@ class CustomPics(commands.Cog):
         stats_count[channel.name] = stats_count.get(channel.name, 0) + increment_value
         stats_user[author.name] = stats_user.get(author.name, 0) + increment_value
 
-    # # On ready event to wait until ready
-    # @commands.Cog.listener()
-    # async def on_ready(self):
-    #     await self.bot.wait_until_ready()
-    #     download("punkt")
-    #     await self.sync_stats_from_db()
-    #     self.delete_messages_task.start()
-    #     self.sync_stats_task.start()
-    #     self.sync_stats_archive_task.start()
-
-    #     # Using an old cache is better than no cache when booting up
-    #     # However, if the restart time is too long, the information CAN become outdated (so you'll get wrong stats)
-    #     self.sync_cog_cache_task.start()
-
     async def startup_tasks(self):
         await self.bot.wait_until_ready()
         self.logger.info("Bot should be ready now. Starting up tasks...")
@@ -260,6 +246,88 @@ class CustomPics(commands.Cog):
 
         await self.sync_cog_cache_task()
         await ctx.send("Done")
+
+    @commands.command()
+    async def flush_cog_cache(self, ctx):
+        owner = await self.bot.fetch_user(os.getenv("OWNER_ID", None))
+        if owner is None or ctx.author.id != owner.id:
+            return
+
+        self.logger.warning(
+            "Flushing cog cache - this will cause the bot to lose all tracking data"
+        )
+
+        # allowed_users - do nothing
+        # delete_message_from_these_users - do nothing
+
+        # messages_to_delete
+        while self.messages_to_delete:
+            m = self.messages_to_delete.pop()
+            try:
+                await m["message"].delete()
+            except discord.errors.HTTPException:
+                pass
+
+        assert not self.messages_to_delete
+
+        # tracking_users_in_channel
+        for u in self.tracking_users_in_channel:
+            try:
+                await self.increment_count(
+                    "voice",
+                    u["user"].voice.channel,
+                    u["user"],
+                    u["user"].guild,
+                    round((datetime.now() - u["join_time"]).total_seconds() / 60, 2),
+                )
+            except Exception:
+                # If the user is not in a voice channel (might happen depending on delay?), Member.voice.channel will be None
+                pass
+
+        self.tracking_users_in_channel = []
+
+        # tracking_statuses
+        for s in self.tracking_statuses:
+            user_info = s
+            # Add the time passed to the stats in minutes
+            time_passed = datetime.now() - user_info["time"]
+            minutes = round(time_passed.total_seconds() / 60, 2)
+
+            stats = self.stats["status"]["count_by_users"]
+            stats[user_info["user"].name] = stats.get(user_info["user"].name, {})
+
+            user_stats_status = stats[user_info["user"].name]
+            user_stats_status[str(user_info["status"])] = (
+                user_stats_status.get(str(user_info["status"]), 0) + minutes
+            )
+
+        self.tracking_statuses = []
+
+        # tracking_activities
+        for a in self.tracking_activities:
+            user_info = a
+            # Add the time passed to the stats in minutes
+            time_passed = datetime.now() - user_info["time"]
+            minutes = round(time_passed.total_seconds() / 60, 2)
+
+            stats = self.stats["activity"]["count_by_users"]
+
+            if user_info["activity"] is None:
+                activity_name = "Unknown"
+            else:
+                activity_name = user_info["activity"]
+
+            stats[activity_name] = stats.get(activity_name, {})
+            stats[activity_name][user_info["user"].name] = (
+                stats[activity_name].get(user_info["user"].name, 0) + minutes
+            )
+            stats[activity_name]["_TOTAL"] = (
+                stats[activity_name].get("_TOTAL", 0) + minutes
+            )
+
+        self.tracking_activities = []
+
+        await ctx.send("Stats were written with current cache and reset.")
 
     @commands.Cog.listener("on_voice_state_update")
     async def track_voice_stat(self, member, before, after):
