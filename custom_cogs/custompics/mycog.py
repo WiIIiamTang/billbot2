@@ -351,6 +351,22 @@ class CustomPics(commands.Cog):
                 member.guild,
                 round(time_passed.total_seconds() / 60, 2),
             )
+        elif (
+            before.channel != after.channel
+            and after.channel is not None
+            and before.channel is not None
+        ):
+            user = [x for x in self.tracking_users_in_channel if x["user"] == member][0]
+            # Add the time passed to the stats in minutes
+            time_passed = datetime.now() - user["join_time"]
+            await self.increment_count(
+                "voice",
+                before.channel,
+                member,
+                member.guild,
+                round(time_passed.total_seconds() / 60, 2),
+            )
+            user["join_time"] = datetime.now()
 
     @commands.Cog.listener("on_member_update")
     async def track_status_stat(self, before, after):
