@@ -5,6 +5,7 @@ import sys
 import json
 import copy
 import os
+import logging
 import pickle
 from nltk import word_tokenize, download
 from string import punctuation
@@ -50,6 +51,7 @@ class CustomPics(commands.Cog):
         self.hchannel = None
         self.owner = None
         self.main_server = None
+        self.logger = logging.getLogger("red.custom_cogs.custompics")
         self.mongo_client = pymongo.MongoClient(os.getenv("MONGO_DB_URI", None))
         if os.getenv("OWNER_ID", None) is not None:
             self.allowed_users.append(os.getenv("OWNER_ID", None))
@@ -68,6 +70,9 @@ class CustomPics(commands.Cog):
             "words": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
         }
 
+        # launch startup tasks, including periodic loop tasks
+        self.bot.loop.create_task(self.startup_tasks())
+
     def cog_unload(self):
         self.delete_messages_task.cancel()
         self.sync_stats_task.cancel()
@@ -75,6 +80,7 @@ class CustomPics(commands.Cog):
         self.sync_cog_cache_task.cancel()
 
     async def sync_stats_from_db(self):
+        self.logger.info("Getting stats from database...")
         db = self.mongo_client["billbot"]
         stats_collection = db["stats"]
         new_stats = {}
@@ -94,6 +100,8 @@ class CustomPics(commands.Cog):
 
         self.stats = new_stats
 
+        self.logger.info("Done.")
+        self.logger.info("Loading cog cache from database...")
         ###################
         # load the cog cache if it exists
         cog_cache_collection = db["cog_cache"]
@@ -118,15 +126,17 @@ class CustomPics(commands.Cog):
 
             self.tracking_users_in_channel = data["tracking_users_in_channel"]
             for m in self.tracking_users_in_channel:
-                m["user"] = discord.utils.get(members, id=m["user"].id)
+                m["user"] = discord.utils.get(members, id=m["user"])
 
             self.tracking_statuses = data["tracking_statuses"]
             for m in self.tracking_statuses:
-                m["user"] = discord.utils.get(members, id=m["user"].id)
+                m["user"] = discord.utils.get(members, id=m["user"])
 
             self.tracking_activities = data["tracking_activities"]
             for m in self.tracking_activities:
-                m["user"] = discord.utils.get(members, id=m["user"].id)
+                m["user"] = discord.utils.get(members, id=m["user"])
+
+        self.logger.info("Done.")
 
     async def increment_count(
         self, category, channel, author, guild, increment_value=1
@@ -144,13 +154,31 @@ class CustomPics(commands.Cog):
         stats_count[channel.name] = stats_count.get(channel.name, 0) + increment_value
         stats_user[author.name] = stats_user.get(author.name, 0) + increment_value
 
-    # On ready event to wait until ready
-    @commands.Cog.listener("on_ready")
-    async def check_bot_ready(self):
+    # # On ready event to wait until ready
+    # @commands.Cog.listener()
+    # async def on_ready(self):
+    #     await self.bot.wait_until_ready()
+    #     download("punkt")
+    #     await self.sync_stats_from_db()
+    #     self.delete_messages_task.start()
+    #     self.sync_stats_task.start()
+    #     self.sync_stats_archive_task.start()
+
+    #     # Using an old cache is better than no cache when booting up
+    #     # However, if the restart time is too long, the information CAN become outdated (so you'll get wrong stats)
+    #     self.sync_cog_cache_task.start()
+
+    async def startup_tasks(self):
         await self.bot.wait_until_ready()
+        self.logger.info("Bot should be ready now. Starting up tasks...")
+
         download("punkt")
         await self.sync_stats_from_db()
+
+        self.logger.info("looping tasks are starting:")
+        self.logger.info("Deleting messages task...")
         self.delete_messages_task.start()
+        self.logger.info("Done.")
         self.sync_stats_task.start()
         self.sync_stats_archive_task.start()
 
@@ -494,6 +522,7 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
     @tasks.loop(hours=8)
     async def sync_stats_archive_task(self):
         await self.bot.wait_until_ready()
+        self.logger.info("Syncing stats archive...")
         db = self.mongo_client["billbot"]
         stats_archive_collection = db["stats_archive"]
 
@@ -506,15 +535,18 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
             {"date": stats["date"]}, {"$set": stats}, upsert=True
         )
 
+        self.logger.info("Done.")
+
     @tasks.loop(hours=8)
     async def sync_cog_cache_task(self):
         await self.bot.wait_until_ready()
+        self.logger.info("Syncing cog cache...")
         db = self.mongo_client["billbot"]
         cog_cache_collection = db["cog_cache"]
 
         cache_lists = {
             "allowed_users": self.allowed_users,
-            "delete_messages": self.delete_message_from_these_users,
+            "delete_message_from_these_users": self.delete_message_from_these_users,
             "messages_to_delete": self.messages_to_delete,
             "tracking_users_in_channel": self.tracking_users_in_channel,
             "tracking_statuses": self.tracking_statuses,
@@ -526,6 +558,9 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
         # Convert the Discord objects to serializable items
         # SKIP MESSAGES BECAUSE ITS HARD TO GET BACK
         new_cache_lists["allowed_users"] = copy.deepcopy(cache_lists["allowed_users"])
+        new_cache_lists["delete_message_from_these_users"] = copy.deepcopy(
+            cache_lists["delete_message_from_these_users"]
+        )
         new_cache_lists["messages_to_delete"] = []
 
         new_cache_lists["tracking_users_in_channel"] = []
@@ -551,14 +586,17 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
 
         # Update the cog_cache document, or create it if it doesn't exist
         cog_cache_collection.update_one(
-            {"cog": "stats"},
-            {"$set": {"cog": "stats", "data": data}},
+            {"cog": "custompics"},
+            {"$set": {"cog": "custompics", "data": data}},
             upsert=True,
         )
+
+        self.logger.info("Done.")
 
     @tasks.loop(hours=12)
     async def sync_stats_task(self):
         await self.bot.wait_until_ready()
+        self.logger.info("Syncing stats...")
         db = self.mongo_client["billbot"]
         stats_collection = db["stats"]
 
@@ -584,3 +622,5 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
                     old[k2][k3] = v3
 
             stats_collection.update_one({"category": k}, {"$set": old}, upsert=False)
+
+        self.logger.info("Done.")
