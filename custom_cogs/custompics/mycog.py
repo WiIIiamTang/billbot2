@@ -514,6 +514,8 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
                     self.messages_to_delete.remove(x)
             except IndexError:
                 pass
+            except discord.errors.Forbidden:
+                self.messages_to_delete.remove(x)
             except discord.errors.NotFound:
                 self.messages_to_delete.remove(x)
             except discord.errors.HTTPException:
