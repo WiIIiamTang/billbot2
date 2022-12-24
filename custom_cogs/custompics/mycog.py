@@ -5,6 +5,7 @@ import sys
 import json
 import copy
 import os
+import pickle
 from nltk import word_tokenize, download
 from string import punctuation
 import pymongo
@@ -71,8 +72,9 @@ class CustomPics(commands.Cog):
         self.delete_messages_task.cancel()
         self.sync_stats_task.cancel()
         self.sync_stats_archive_task.cancel()
+        self.sync_cog_cache_task.cancel()
 
-    def sync_stats_from_db(self):
+    async def sync_stats_from_db(self):
         db = self.mongo_client["billbot"]
         stats_collection = db["stats"]
         new_stats = {}
@@ -91,6 +93,40 @@ class CustomPics(commands.Cog):
             new_stats[k]["count_by_users"] = old["count_by_users"]
 
         self.stats = new_stats
+
+        ###################
+        # load the cog cache if it exists
+        cog_cache_collection = db["cog_cache"]
+        cog_cache = cog_cache_collection.find_one({"cog": "custompics"})
+        if cog_cache is not None:
+            # unpickle the data
+            data = pickle.loads(cog_cache["data"])
+
+            # set the lists to the data
+            self.allowed_users = data["allowed_users"]
+            self.delete_message_from_these_users = data[
+                "delete_message_from_these_users"
+            ]
+
+            # we need to load the discord objects in these lists from client cache
+
+            # Exception: the list of messages object will be LOST (this should just be **empty**)
+            self.messages_to_delete = data["messages_to_delete"]
+
+            # Rest is getting members - hopefully they're still cached, otherwise its lost
+            members = list(self.bot.get_all_members())
+
+            self.tracking_users_in_channel = data["tracking_users_in_channel"]
+            for m in self.tracking_users_in_channel:
+                m["user"] = discord.utils.get(members, id=m["user"].id)
+
+            self.tracking_statuses = data["tracking_statuses"]
+            for m in self.tracking_statuses:
+                m["user"] = discord.utils.get(members, id=m["user"].id)
+
+            self.tracking_activities = data["tracking_activities"]
+            for m in self.tracking_activities:
+                m["user"] = discord.utils.get(members, id=m["user"].id)
 
     async def increment_count(
         self, category, channel, author, guild, increment_value=1
@@ -112,13 +148,15 @@ class CustomPics(commands.Cog):
     @commands.Cog.listener("on_ready")
     async def check_bot_ready(self):
         await self.bot.wait_until_ready()
-        self.sync_stats_from_db()
-
+        download("punkt")
+        await self.sync_stats_from_db()
         self.delete_messages_task.start()
         self.sync_stats_task.start()
         self.sync_stats_archive_task.start()
 
-        download("punkt")
+        # Using an old cache is better than no cache when booting up
+        # However, if the restart time is too long, the information CAN become outdated (so you'll get wrong stats)
+        self.sync_cog_cache_task.start()
 
     @commands.Cog.listener("on_message")
     async def track_message_stat(self, message):
@@ -186,6 +224,15 @@ class CustomPics(commands.Cog):
         await self.sync_stats_archive_task()
         await ctx.send("Done")
 
+    @commands.command()
+    async def force_cog_cache_sync(self, ctx):
+        owner = await self.bot.fetch_user(os.getenv("OWNER_ID", None))
+        if owner is None or ctx.author.id != owner.id:
+            return
+
+        await self.sync_cog_cache_task()
+        await ctx.send("Done")
+
     @commands.Cog.listener("on_voice_state_update")
     async def track_voice_stat(self, member, before, after):
         # Start tracking time if a user joins a voice channel
@@ -223,7 +270,7 @@ class CustomPics(commands.Cog):
                 if after.activity is not None:
                     user_info = {
                         "user": after,
-                        "activity": after.activity,
+                        "activity": after.activity.name,
                         "time": datetime.now(),
                     }
                     self.tracking_activities.append(user_info)
@@ -235,10 +282,10 @@ class CustomPics(commands.Cog):
 
                 stats = self.stats["activity"]["count_by_users"]
 
-                if user_info["activity"].name is None:
+                if user_info["activity"] is None:
                     activity_name = "Unknown"
                 else:
-                    activity_name = user_info["activity"].name
+                    activity_name = user_info["activity"]
 
                 stats[activity_name] = stats.get(activity_name, {})
                 stats[activity_name][user_info["user"].name] = (
@@ -253,7 +300,7 @@ class CustomPics(commands.Cog):
                         x for x in self.tracking_activities if x["user"] != after
                     ]
                 else:
-                    user_info["activity"] = after.activity
+                    user_info["activity"] = after.activity.name
                     user_info["time"] = datetime.now()
 
         ###################################################################
@@ -264,7 +311,11 @@ class CustomPics(commands.Cog):
 
         user_info = [x for x in self.tracking_statuses if x["user"] == after]
         if not user_info:
-            user_info = {"user": after, "status": after.status, "time": datetime.now()}
+            user_info = {
+                "user": after,
+                "status": str(after.status),
+                "time": datetime.now(),
+            }
             self.tracking_statuses.append(user_info)
         else:
             user_info = user_info[0]
@@ -280,7 +331,7 @@ class CustomPics(commands.Cog):
                 user_stats_status.get(str(user_info["status"]), 0) + minutes
             )
 
-            user_info["status"] = after.status
+            user_info["status"] = str(after.status)
             user_info["time"] = datetime.now()
 
     @commands.Cog.listener("on_message")
@@ -294,12 +345,14 @@ class CustomPics(commands.Cog):
     @commands.command()
     async def stats(self, ctx):
         formatted = json.dumps(self.stats, indent=1)
-        if len(formatted) > 1900:
-            while len(formatted) > 0:
-                await ctx.send("```\n{}\n```".format(formatted[:1900]))
-                formatted = formatted[1900:]
-        else:
-            await ctx.send("```\n{}\n```".format(formatted))
+        # if len(formatted) > 1900:
+        #     while len(formatted) > 0:
+        #         await ctx.send("```\n{}\n```".format(formatted[:1900]))
+        #         formatted = formatted[1900:]
+        # else:
+        #     await ctx.send("```\n{}\n```".format(formatted))
+        buffer = BytesIO(str(formatted).encode("utf-8"))
+        await ctx.send(file=discord.File(fp=buffer, filename="stats.txt"))
 
     @commands.command()
     async def wolfram(self, ctx, *args):
@@ -433,6 +486,8 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
                     self.messages_to_delete.remove(x)
             except IndexError:
                 pass
+            except discord.errors.NotFound:
+                self.messages_to_delete.remove(x)
             except discord.errors.HTTPException:
                 pass
 
@@ -449,6 +504,56 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
         # Update the stats document, or create it if it doesn't exist
         stats_archive_collection.update_one(
             {"date": stats["date"]}, {"$set": stats}, upsert=True
+        )
+
+    @tasks.loop(hours=8)
+    async def sync_cog_cache_task(self):
+        await self.bot.wait_until_ready()
+        db = self.mongo_client["billbot"]
+        cog_cache_collection = db["cog_cache"]
+
+        cache_lists = {
+            "allowed_users": self.allowed_users,
+            "delete_messages": self.delete_message_from_these_users,
+            "messages_to_delete": self.messages_to_delete,
+            "tracking_users_in_channel": self.tracking_users_in_channel,
+            "tracking_statuses": self.tracking_statuses,
+            "tracking_activities": self.tracking_activities,
+        }
+
+        new_cache_lists = {}
+
+        # Convert the Discord objects to serializable items
+        # SKIP MESSAGES BECAUSE ITS HARD TO GET BACK
+        new_cache_lists["allowed_users"] = copy.deepcopy(cache_lists["allowed_users"])
+        new_cache_lists["messages_to_delete"] = []
+
+        new_cache_lists["tracking_users_in_channel"] = []
+        for m in cache_lists["tracking_users_in_channel"]:
+            new_cache_lists["tracking_users_in_channel"].append(
+                {"user": m["user"].id, "join_time": m["join_time"]}
+            )
+
+        new_cache_lists["tracking_statuses"] = []
+        for m in cache_lists["tracking_statuses"]:
+            new_cache_lists["tracking_statuses"].append(
+                {"user": m["user"].id, "status": m["status"], "time": m["time"]}
+            )
+
+        new_cache_lists["tracking_activities"] = []
+        for m in cache_lists["tracking_activities"]:
+            new_cache_lists["tracking_activities"].append(
+                {"user": m["user"].id, "activity": m["activity"], "time": m["time"]}
+            )
+
+        # pickle the cache_lists
+        data = pickle.dumps(new_cache_lists)
+
+        # Update the cog_cache document, or create it if it doesn't exist
+        cog_cache_collection.update_one(
+            {"cog": "stats"},
+            {"$set": {"cog": "stats", "data": data}},
+            upsert=True,
         )
 
     @tasks.loop(hours=12)
