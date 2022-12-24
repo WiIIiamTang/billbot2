@@ -67,14 +67,6 @@ class CustomPics(commands.Cog):
             "words": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
         }
 
-        self.sync_stats_from_db()
-
-        self.delete_messages_task.start()
-        self.sync_stats_task.start()
-        self.sync_stats_archive_task.start()
-
-        download("punkt")
-
     def cog_unload(self):
         self.delete_messages_task.cancel()
         self.sync_stats_task.cancel()
@@ -115,6 +107,18 @@ class CustomPics(commands.Cog):
         stats_count["_TOTAL"] += increment_value
         stats_count[channel.name] = stats_count.get(channel.name, 0) + increment_value
         stats_user[author.name] = stats_user.get(author.name, 0) + increment_value
+
+    # On ready event to wait until ready
+    @commands.Cog.listener("on_ready")
+    async def check_bot_ready(self):
+        await self.bot.wait_until_ready()
+        self.sync_stats_from_db()
+
+        self.delete_messages_task.start()
+        self.sync_stats_task.start()
+        self.sync_stats_archive_task.start()
+
+        download("punkt")
 
     @commands.Cog.listener("on_message")
     async def track_message_stat(self, message):
@@ -396,6 +400,7 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
 
     @tasks.loop(seconds=15)
     async def delete_messages_task(self):
+        await self.bot.wait_until_ready()
         tmp = self.messages_to_delete.copy()
         for x in tmp:
             try:
@@ -417,6 +422,7 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
 
     @tasks.loop(hours=8)
     async def sync_stats_archive_task(self):
+        await self.bot.wait_until_ready()
         db = self.mongo_client["billbot"]
         stats_archive_collection = db["stats_archive"]
 
@@ -431,6 +437,7 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
 
     @tasks.loop(hours=12)
     async def sync_stats_task(self):
+        await self.bot.wait_until_ready()
         db = self.mongo_client["billbot"]
         stats_collection = db["stats"]
 
