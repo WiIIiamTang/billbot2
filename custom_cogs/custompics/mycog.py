@@ -382,7 +382,7 @@ class CustomPics(commands.Cog):
                 interaction_voice[member.name][before.channel.name][
                     other_members.name
                 ] = interaction_voice[member.name][before.channel.name].get(
-                    other_members.name, {}
+                    other_members.name, 0
                 )
                 interaction_voice[other_members.name] = interaction_voice.get(
                     other_members.name, {}
@@ -393,17 +393,21 @@ class CustomPics(commands.Cog):
                 interaction_voice[other_members.name][before.channel.name][
                     member.name
                 ] = interaction_voice[other_members.name][before.channel.name].get(
-                    member.name, {}
+                    member.name, 0
                 )
 
                 interaction_voice[member.name][before.channel.name][
                     other_members.name
-                ] = interaction_voice.get(other_members.name, 0) + round(
+                ] = interaction_voice[member.name][before.channel.name].get(
+                    other_members.name, 0
+                ) + round(
                     time_passed.total_seconds() / 60, 2
                 )
                 interaction_voice[other_members.name][before.channel.name][
                     member.name
-                ] = interaction_voice.get(other_members.name, 0) + round(
+                ] = interaction_voice[member.name][before.channel.name].get(
+                    other_members.name, 0
+                ) + round(
                     time_passed.total_seconds() / 60, 2
                 )
 
@@ -481,7 +485,7 @@ class CustomPics(commands.Cog):
                 interaction_voice[member.name][before.channel.name][
                     other_members.name
                 ] = interaction_voice[member.name][before.channel.name].get(
-                    other_members.name, {}
+                    other_members.name, 0
                 )
                 interaction_voice[other_members.name] = interaction_voice.get(
                     other_members.name, {}
@@ -492,17 +496,21 @@ class CustomPics(commands.Cog):
                 interaction_voice[other_members.name][before.channel.name][
                     member.name
                 ] = interaction_voice[other_members.name][before.channel.name].get(
-                    member.name, {}
+                    member.name, 0
                 )
 
                 interaction_voice[member.name][before.channel.name][
                     other_members.name
-                ] = interaction_voice.get(other_members.name, 0) + round(
+                ] = interaction_voice[member.name][before.channel.name].get(
+                    other_members.name, 0
+                ) + round(
                     time_passed.total_seconds() / 60, 2
                 )
                 interaction_voice[other_members.name][before.channel.name][
                     member.name
-                ] = interaction_voice.get(other_members.name, 0) + round(
+                ] = interaction_voice[member.name][before.channel.name].get(
+                    other_members.name, 0
+                ) + round(
                     time_passed.total_seconds() / 60, 2
                 )
 
