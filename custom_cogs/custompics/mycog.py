@@ -369,47 +369,47 @@ class CustomPics(commands.Cog):
             )
 
             # update interaction_voice
-            interaction_voice = self.stats["interaction_voice"]["count_by_users"]
-            interaction_voice[member.name] = interaction_voice.get(member.name, {})
-            interaction_voice[member.name][before.channel.name] = interaction_voice[
-                member.name
-            ].get(before.channel.name, {})
+            # interaction_voice = self.stats["interaction_voice"]["count_by_users"]
+            # interaction_voice[member.name] = interaction_voice.get(member.name, {})
+            # interaction_voice[member.name][before.channel.name] = interaction_voice[
+            #     member.name
+            # ].get(before.channel.name, {})
 
-            for other_members in before.channel.members:
-                if other_members == member:
-                    continue
+            # for other_members in before.channel.members:
+            #     if other_members == member:
+            #         continue
 
-                interaction_voice[member.name][before.channel.name][
-                    other_members.name
-                ] = interaction_voice[member.name][before.channel.name].get(
-                    other_members.name, 0
-                )
-                interaction_voice[other_members.name] = interaction_voice.get(
-                    other_members.name, {}
-                )
-                interaction_voice[other_members.name][
-                    before.channel.name
-                ] = interaction_voice[other_members.name].get(before.channel.name, {})
-                interaction_voice[other_members.name][before.channel.name][
-                    member.name
-                ] = interaction_voice[other_members.name][before.channel.name].get(
-                    member.name, 0
-                )
+            #     interaction_voice[member.name][before.channel.name][
+            #         other_members.name
+            #     ] = interaction_voice[member.name][before.channel.name].get(
+            #         other_members.name, 0
+            #     )
+            #     interaction_voice[other_members.name] = interaction_voice.get(
+            #         other_members.name, {}
+            #     )
+            #     interaction_voice[other_members.name][
+            #         before.channel.name
+            #     ] = interaction_voice[other_members.name].get(before.channel.name, {})
+            #     interaction_voice[other_members.name][before.channel.name][
+            #         member.name
+            #     ] = interaction_voice[other_members.name][before.channel.name].get(
+            #         member.name, 0
+            #     )
 
-                interaction_voice[member.name][before.channel.name][
-                    other_members.name
-                ] = interaction_voice[member.name][before.channel.name].get(
-                    other_members.name, 0
-                ) + round(
-                    time_passed.total_seconds() / 60, 2
-                )
-                interaction_voice[other_members.name][before.channel.name][
-                    member.name
-                ] = interaction_voice[member.name][before.channel.name].get(
-                    other_members.name, 0
-                ) + round(
-                    time_passed.total_seconds() / 60, 2
-                )
+            #     interaction_voice[member.name][before.channel.name][
+            #         other_members.name
+            #     ] = interaction_voice[member.name][before.channel.name].get(
+            #         other_members.name, 0
+            #     ) + round(
+            #         time_passed.total_seconds() / 60, 2
+            #     )
+            #     interaction_voice[other_members.name][before.channel.name][
+            #         member.name
+            #     ] = interaction_voice[member.name][before.channel.name].get(
+            #         other_members.name, 0
+            #     ) + round(
+            #         time_passed.total_seconds() / 60, 2
+            #     )
 
             # update voice_state
             voice_state = self.stats["voice_state"]["count_by_users"]
@@ -472,47 +472,47 @@ class CustomPics(commands.Cog):
             user["join_time"] = datetime.now()
 
             # update interaction_voice
-            interaction_voice = self.stats["interaction_voice"]["count_by_users"]
-            interaction_voice[member.name] = interaction_voice.get(member.name, {})
-            interaction_voice[member.name][before.channel.name] = interaction_voice[
-                member.name
-            ].get(before.channel.name, {})
+            # interaction_voice = self.stats["interaction_voice"]["count_by_users"]
+            # interaction_voice[member.name] = interaction_voice.get(member.name, {})
+            # interaction_voice[member.name][before.channel.name] = interaction_voice[
+            #     member.name
+            # ].get(before.channel.name, {})
 
-            for other_members in before.channel.members:
-                if other_members == member:
-                    continue
+            # for other_members in before.channel.members:
+            #     if other_members == member:
+            #         continue
 
-                interaction_voice[member.name][before.channel.name][
-                    other_members.name
-                ] = interaction_voice[member.name][before.channel.name].get(
-                    other_members.name, 0
-                )
-                interaction_voice[other_members.name] = interaction_voice.get(
-                    other_members.name, {}
-                )
-                interaction_voice[other_members.name][
-                    before.channel.name
-                ] = interaction_voice[other_members.name].get(before.channel.name, {})
-                interaction_voice[other_members.name][before.channel.name][
-                    member.name
-                ] = interaction_voice[other_members.name][before.channel.name].get(
-                    member.name, 0
-                )
+            #     interaction_voice[member.name][before.channel.name][
+            #         other_members.name
+            #     ] = interaction_voice[member.name][before.channel.name].get(
+            #         other_members.name, 0
+            #     )
+            #     interaction_voice[other_members.name] = interaction_voice.get(
+            #         other_members.name, {}
+            #     )
+            #     interaction_voice[other_members.name][
+            #         before.channel.name
+            #     ] = interaction_voice[other_members.name].get(before.channel.name, {})
+            #     interaction_voice[other_members.name][before.channel.name][
+            #         member.name
+            #     ] = interaction_voice[other_members.name][before.channel.name].get(
+            #         member.name, 0
+            #     )
 
-                interaction_voice[member.name][before.channel.name][
-                    other_members.name
-                ] = interaction_voice[member.name][before.channel.name].get(
-                    other_members.name, 0
-                ) + round(
-                    time_passed.total_seconds() / 60, 2
-                )
-                interaction_voice[other_members.name][before.channel.name][
-                    member.name
-                ] = interaction_voice[member.name][before.channel.name].get(
-                    other_members.name, 0
-                ) + round(
-                    time_passed.total_seconds() / 60, 2
-                )
+            #     interaction_voice[member.name][before.channel.name][
+            #         other_members.name
+            #     ] = interaction_voice[member.name][before.channel.name].get(
+            #         other_members.name, 0
+            #     ) + round(
+            #         time_passed.total_seconds() / 60, 2
+            #     )
+            #     interaction_voice[other_members.name][before.channel.name][
+            #         member.name
+            #     ] = interaction_voice[member.name][before.channel.name].get(
+            #         other_members.name, 0
+            #     ) + round(
+            #         time_passed.total_seconds() / 60, 2
+            #     )
 
             # update voice_state
             voice_state = self.stats["voice_state"]["count_by_users"]
