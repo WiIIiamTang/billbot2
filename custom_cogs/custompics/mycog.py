@@ -397,8 +397,11 @@ class CustomPics(commands.Cog):
             voice_state[member.name] = voice_state.get(member.name, {})
             voice_state_channel = self.stats["voice_state"]["count_by_channel"]
             voice_state_channel[before.channel.name] = voice_state_channel.get(
-                member.name, {}
+                before.channel.name, {}
             )
+            voice_state_channel[before.channel.name][member.name] = voice_state_channel[
+                before.channel.name
+            ].get(member.name, {})
             voice_state_channel_user = voice_state_channel[before.channel.name][
                 member.name
             ]
@@ -636,6 +639,16 @@ class CustomPics(commands.Cog):
 
             user_info["status"] = str(after.status)
             user_info["time"] = datetime.now()
+
+            # We need to only track the main server
+            # Later can expand to track other servers by separating stats db
+            if self.main_server is None:
+                self.main_server = await self.bot.fetch_guild(
+                    os.getenv("SERVER_ID", None)
+                )
+
+            if before.guild.id != self.main_server.id:
+                return
 
             time_stream = self.stats["status_time_stream"]["count_by_users"]
             time_stream[user_info["user"].name] = time_stream.get(
