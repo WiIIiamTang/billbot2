@@ -68,6 +68,10 @@ class CustomPics(commands.Cog):
             "status": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
             "activity": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
             "words": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
+            "status_time_stream": {
+                "count_by_channel": {"_TOTAL": -1},
+                "count_by_users": {},
+            },
         }
 
         # launch startup tasks, including periodic loop tasks
@@ -445,6 +449,18 @@ class CustomPics(commands.Cog):
 
             user_info["status"] = str(after.status)
             user_info["time"] = datetime.now()
+
+            time_stream = self.stats["status_time_stream"]["count_by_users"]
+            time_stream[user_info["user"].name] = time_stream.get(
+                user_info["user"].name, []
+            )
+
+            time_stream[user_info["user"].name].append(
+                {
+                    "status": str(after.status),
+                    "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                }
+            )
 
     @commands.Cog.listener("on_message")
     async def track_audio_stat(self, message):
