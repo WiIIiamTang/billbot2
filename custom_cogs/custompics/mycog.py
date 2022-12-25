@@ -190,6 +190,12 @@ class CustomPics(commands.Cog):
             "messages", message.channel, message.author, message.guild
         )
 
+    @commands.command()
+    async def review(self, ctx):
+        await ctx.send(
+            "https://cdn.discordapp.com/attachments/642483639719952384/859958140005908500/ll7f77rl7d871.png"
+        )
+
     @commands.Cog.listener("on_message")
     async def track_words_stat(self, message):
         if message.author.bot or message.content.startswith("."):
