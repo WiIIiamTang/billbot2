@@ -76,10 +76,7 @@ class CustomPics(commands.Cog):
                 "count_by_channel": {"_TOTAL": -1},
                 "count_by_users": {},
             },
-            "interaction_messages": {
-                "count_by_channel": {"_TOTAL": -1},
-                "count_by_users": {},
-            },
+            "voice_state": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
         }
 
         # launch startup tasks, including periodic loop tasks
@@ -364,6 +361,7 @@ class CustomPics(commands.Cog):
                 round(time_passed.total_seconds() / 60, 2),
             )
 
+            # update interaction_voice
             interaction_voice = self.stats["interaction_voice"]["count_by_users"]
             interaction_voice[member.name] = interaction_voice.get(member.name, {})
 
@@ -387,6 +385,47 @@ class CustomPics(commands.Cog):
                 ] = interaction_voice_by_channel.get(other_members.name, 0) + round(
                     time_passed.total_seconds() / 60, 2
                 )
+
+            # update voice_state
+            voice_state = self.stats["voice_state"]["count_by_users"]
+            voice_state[member.name] = voice_state.get(member.name, {})
+            voice_state_channel = self.stats["voice_state"]["count_by_channel"]
+            voice_state_channel[before.channel.name] = voice_state_channel.get(
+                member.name, {}
+            )
+            voice_state_channel_user = voice_state_channel[before.channel.name][
+                member.name
+            ]
+
+            if before.self_mute:
+                voice_state[member.name]["self_mute"] = voice_state[member.name].get(
+                    "self_mute", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+                voice_state_channel_user["self_mute"] = voice_state_channel_user.get(
+                    "self_mute", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+            elif before.self_deaf:
+                voice_state[member.name]["self_deaf"] = voice_state[member.name].get(
+                    "self_deaf", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+                voice_state_channel_user["self_deaf"] = voice_state_channel_user.get(
+                    "self_deaf", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+            elif before.self_stream:
+                voice_state[member.name]["self_stream"] = voice_state[member.name].get(
+                    "self_stream", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+                voice_state_channel_user["self_stream"] = voice_state_channel_user.get(
+                    "self_stream", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+            elif before.self_video:
+                voice_state[member.name]["self_video"] = voice_state[member.name].get(
+                    "self_video", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+                voice_state_channel_user["self_video"] = voice_state_channel_user.get(
+                    "self_video", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+
         elif (
             before.channel != after.channel
             and after.channel is not None
@@ -404,6 +443,7 @@ class CustomPics(commands.Cog):
             )
             user["join_time"] = datetime.now()
 
+            # update interaction_voice
             interaction_voice = self.stats["interaction_voice"]["count_by_users"]
             interaction_voice[member.name] = interaction_voice.get(member.name, {})
 
@@ -427,6 +467,91 @@ class CustomPics(commands.Cog):
                 ] = interaction_voice_by_channel.get(other_members.name, 0) + round(
                     time_passed.total_seconds() / 60, 2
                 )
+
+            # update voice_state
+            voice_state = self.stats["voice_state"]["count_by_users"]
+            voice_state[member.name] = voice_state.get(member.name, {})
+            voice_state_channel = self.stats["voice_state"]["count_by_channel"]
+            voice_state_channel[before.channel.name] = voice_state_channel.get(
+                member.name, {}
+            )
+            voice_state_channel_user = voice_state_channel[before.channel.name][
+                member.name
+            ]
+
+            if before.self_mute:
+                voice_state[member.name]["self_mute"] = voice_state[member.name].get(
+                    "self_mute", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+                voice_state_channel_user["self_mute"] = voice_state_channel_user.get(
+                    "self_mute", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+            elif before.self_deaf:
+                voice_state[member.name]["self_deaf"] = voice_state[member.name].get(
+                    "self_deaf", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+                voice_state_channel_user["self_deaf"] = voice_state_channel_user.get(
+                    "self_deaf", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+            elif before.self_stream:
+                voice_state[member.name]["self_stream"] = voice_state[member.name].get(
+                    "self_stream", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+                voice_state_channel_user["self_stream"] = voice_state_channel_user.get(
+                    "self_stream", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+            elif before.self_video:
+                voice_state[member.name]["self_video"] = voice_state[member.name].get(
+                    "self_video", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+                voice_state_channel_user["self_video"] = voice_state_channel_user.get(
+                    "self_video", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+
+        elif after.channel == before.channel and after != before:
+            user = [x for x in self.tracking_users_in_channel if x["user"] == member][0]
+            # Add the time passed to the stats in minutes
+            time_passed = datetime.now() - user["join_time"]
+
+            # update voice_state
+            voice_state = self.stats["voice_state"]["count_by_users"]
+            voice_state[member.name] = voice_state.get(member.name, {})
+            voice_state_channel = self.stats["voice_state"]["count_by_channel"]
+            voice_state_channel[before.channel.name] = voice_state_channel.get(
+                member.name, {}
+            )
+            voice_state_channel_user = voice_state_channel[before.channel.name][
+                member.name
+            ]
+
+            if before.self_mute:
+                voice_state[member.name]["self_mute"] = voice_state[member.name].get(
+                    "self_mute", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+                voice_state_channel_user["self_mute"] = voice_state_channel_user.get(
+                    "self_mute", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+            elif before.self_deaf:
+                voice_state[member.name]["self_deaf"] = voice_state[member.name].get(
+                    "self_deaf", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+                voice_state_channel_user["self_deaf"] = voice_state_channel_user.get(
+                    "self_deaf", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+            elif before.self_stream:
+                voice_state[member.name]["self_stream"] = voice_state[member.name].get(
+                    "self_stream", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+                voice_state_channel_user["self_stream"] = voice_state_channel_user.get(
+                    "self_stream", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+            elif before.self_video:
+                voice_state[member.name]["self_video"] = voice_state[member.name].get(
+                    "self_video", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+                voice_state_channel_user["self_video"] = voice_state_channel_user.get(
+                    "self_video", 0
+                ) + round(time_passed.total_seconds() / 60, 2)
 
     @commands.Cog.listener("on_member_update")
     async def track_status_stat(self, before, after):
