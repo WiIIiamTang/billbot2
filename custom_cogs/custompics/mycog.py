@@ -344,6 +344,7 @@ class CustomPics(commands.Cog):
 
         await ctx.send("Stats were written with current cache and reset.")
 
+    # TODO: this is getting really bad, there is too much code duplication
     @commands.Cog.listener("on_voice_state_update")
     async def track_voice_stat(self, member, before, after):
         # Start tracking time if a user joins a voice channel
@@ -370,25 +371,17 @@ class CustomPics(commands.Cog):
             # update interaction_voice
             interaction_voice = self.stats["interaction_voice"]["count_by_users"]
             interaction_voice[member.name] = interaction_voice.get(member.name, {})
-
-            interaction_voice_by_channel = self.stats["interaction_voice"][
-                "count_by_channel"
-            ]
-            interaction_voice_by_channel[
-                before.channel.name
-            ] = interaction_voice_by_channel.get(before.channel.name, {})
+            interaction_voice[member.name][before.channel.name] = interaction_voice[
+                member.name
+            ].get(before.channel.name, {})
 
             for other_members in before.channel.members:
                 if other_members == member:
                     continue
 
-                interaction_voice[other_members.name] = interaction_voice.get(
-                    other_members.name, 0
-                ) + round(time_passed.total_seconds() / 60, 2)
-
-                interaction_voice_by_channel[
+                interaction_voice[member.name][
                     before.channel.name
-                ] = interaction_voice_by_channel.get(other_members.name, 0) + round(
+                ] = interaction_voice.get(other_members.name, 0) + round(
                     time_passed.total_seconds() / 60, 2
                 )
 
@@ -474,8 +467,11 @@ class CustomPics(commands.Cog):
             voice_state[member.name] = voice_state.get(member.name, {})
             voice_state_channel = self.stats["voice_state"]["count_by_channel"]
             voice_state_channel[before.channel.name] = voice_state_channel.get(
-                member.name, {}
+                before.channel.name, {}
             )
+            voice_state_channel[before.channel.name][member.name] = voice_state_channel[
+                before.channel.name
+            ].get(member.name, {})
             voice_state_channel_user = voice_state_channel[before.channel.name][
                 member.name
             ]
@@ -519,8 +515,11 @@ class CustomPics(commands.Cog):
             voice_state[member.name] = voice_state.get(member.name, {})
             voice_state_channel = self.stats["voice_state"]["count_by_channel"]
             voice_state_channel[before.channel.name] = voice_state_channel.get(
-                member.name, {}
+                before.channel.name, {}
             )
+            voice_state_channel[before.channel.name][member.name] = voice_state_channel[
+                before.channel.name
+            ].get(member.name, {})
             voice_state_channel_user = voice_state_channel[before.channel.name][
                 member.name
             ]
