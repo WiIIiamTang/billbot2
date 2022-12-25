@@ -561,6 +561,7 @@ class CustomPics(commands.Cog):
             user = [x for x in self.tracking_users_in_channel if x["user"] == member][0]
             # Add the time passed to the stats in minutes
             time_passed = datetime.now() - user["join_time"]
+            user["join_time"] = datetime.now()
 
             # update voice_state
             voice_state = self.stats["voice_state"]["count_by_users"]
