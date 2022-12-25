@@ -72,6 +72,14 @@ class CustomPics(commands.Cog):
                 "count_by_channel": {"_TOTAL": -1},
                 "count_by_users": {},
             },
+            "interaction_voice": {
+                "count_by_channel": {"_TOTAL": -1},
+                "count_by_users": {},
+            },
+            "interaction_messages": {
+                "count_by_channel": {"_TOTAL": -1},
+                "count_by_users": {},
+            },
         }
 
         # launch startup tasks, including periodic loop tasks
@@ -355,6 +363,30 @@ class CustomPics(commands.Cog):
                 member.guild,
                 round(time_passed.total_seconds() / 60, 2),
             )
+
+            interaction_voice = self.stats["interaction_voice"]["count_by_users"]
+            interaction_voice[member.name] = interaction_voice.get(member.name, {})
+
+            interaction_voice_by_channel = self.stats["interaction_voice"][
+                "count_by_channel"
+            ]
+            interaction_voice_by_channel[
+                before.channel.name
+            ] = interaction_voice_by_channel.get(before.channel.name, {})
+
+            for other_members in before.channel.members:
+                if other_members == member:
+                    continue
+
+                interaction_voice[other_members.name] = interaction_voice.get(
+                    other_members.name, 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+
+                interaction_voice_by_channel[
+                    before.channel.name
+                ] = interaction_voice_by_channel.get(other_members.name, 0) + round(
+                    time_passed.total_seconds() / 60, 2
+                )
         elif (
             before.channel != after.channel
             and after.channel is not None
@@ -371,6 +403,30 @@ class CustomPics(commands.Cog):
                 round(time_passed.total_seconds() / 60, 2),
             )
             user["join_time"] = datetime.now()
+
+            interaction_voice = self.stats["interaction_voice"]["count_by_users"]
+            interaction_voice[member.name] = interaction_voice.get(member.name, {})
+
+            interaction_voice_by_channel = self.stats["interaction_voice"][
+                "count_by_channel"
+            ]
+            interaction_voice_by_channel[
+                before.channel.name
+            ] = interaction_voice_by_channel.get(before.channel.name, {})
+
+            for other_members in before.channel.members:
+                if other_members == member:
+                    continue
+
+                interaction_voice[other_members.name] = interaction_voice.get(
+                    other_members.name, 0
+                ) + round(time_passed.total_seconds() / 60, 2)
+
+                interaction_voice_by_channel[
+                    before.channel.name
+                ] = interaction_voice_by_channel.get(other_members.name, 0) + round(
+                    time_passed.total_seconds() / 60, 2
+                )
 
     @commands.Cog.listener("on_member_update")
     async def track_status_stat(self, before, after):
