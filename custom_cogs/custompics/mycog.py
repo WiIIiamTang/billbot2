@@ -714,15 +714,17 @@ class CustomPics(commands.Cog):
                 "audio", message.channel, message.author, message.guild
             )
 
-    @commands.command()
-    async def stats(self, ctx):
+    @commands.command(help="Shows the stats without any pretty printing.")
+    async def raw_stats(self, ctx):
+        formatted = json.dumps(self.stats)
+        buffer = BytesIO(str(formatted).encode("utf-8"))
+        await ctx.send(file=discord.File(fp=buffer, filename="stats.txt"))
+
+    @commands.command(
+        help="This may not show all stats in the chat, download the file instead."
+    )
+    async def formatted_stats(self, ctx):
         formatted = json.dumps(self.stats, indent=1)
-        # if len(formatted) > 1900:
-        #     while len(formatted) > 0:
-        #         await ctx.send("```\n{}\n```".format(formatted[:1900]))
-        #         formatted = formatted[1900:]
-        # else:
-        #     await ctx.send("```\n{}\n```".format(formatted))
         buffer = BytesIO(str(formatted).encode("utf-8"))
         await ctx.send(file=discord.File(fp=buffer, filename="stats.txt"))
 
