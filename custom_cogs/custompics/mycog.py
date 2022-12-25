@@ -384,6 +384,12 @@ class CustomPics(commands.Cog):
                 ] = interaction_voice[member.name][before.channel.name].get(
                     other_members.name, {}
                 )
+                interaction_voice[other_members.name] = interaction_voice.get(
+                    other_members.name, {}
+                )
+                interaction_voice[other_members.name][
+                    before.channel.name
+                ] = interaction_voice[other_members.name].get(before.channel.name, {})
                 interaction_voice[other_members.name][before.channel.name][
                     member.name
                 ] = interaction_voice[other_members.name][before.channel.name].get(
@@ -477,6 +483,12 @@ class CustomPics(commands.Cog):
                 ] = interaction_voice[member.name][before.channel.name].get(
                     other_members.name, {}
                 )
+                interaction_voice[other_members.name] = interaction_voice.get(
+                    other_members.name, {}
+                )
+                interaction_voice[other_members.name][
+                    before.channel.name
+                ] = interaction_voice[other_members.name].get(before.channel.name, {})
                 interaction_voice[other_members.name][before.channel.name][
                     member.name
                 ] = interaction_voice[other_members.name][before.channel.name].get(
