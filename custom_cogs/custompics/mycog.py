@@ -568,7 +568,12 @@ class CustomPics(commands.Cog):
             and after.channel is not None
             and before.channel is not None
         ):
-            user = [x for x in self.tracking_users_in_channel if x["user"] == member][0]
+            try:
+                user = [
+                    x for x in self.tracking_users_in_channel if x["user"] == member
+                ][0]
+            except IndexError:
+                return
             # Add the time passed to the stats in minutes
             time_passed = datetime.now() - user["join_time"]
             await self.increment_count(
@@ -667,7 +672,12 @@ class CustomPics(commands.Cog):
                 ) + round(time_passed.total_seconds() / 60, 2)
 
         elif after.channel == before.channel and after != before:
-            user = [x for x in self.tracking_users_in_channel if x["user"] == member][0]
+            try:
+                user = [
+                    x for x in self.tracking_users_in_channel if x["user"] == member
+                ][0]
+            except IndexError:
+                return
             # Add the time passed to the stats in minutes
             time_passed = datetime.now() - user["join_time"]
             user["join_time"] = datetime.now()
