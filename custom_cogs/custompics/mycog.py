@@ -458,7 +458,12 @@ class CustomPics(commands.Cog):
             )
         # Else, stop tracking time if a user leaves a voice channel
         elif before.channel is not None and after.channel is None:
-            user = [x for x in self.tracking_users_in_channel if x["user"] == member][0]
+            try:
+                user = [
+                    x for x in self.tracking_users_in_channel if x["user"] == member
+                ][0]
+            except IndexError:
+                return
             self.tracking_users_in_channel = [
                 x for x in self.tracking_users_in_channel if x["user"] != member
             ]
@@ -1016,7 +1021,9 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
         )
         new_cache_lists["messages_to_delete"] = []
 
-        new_cache_lists["tracking_interactions"] = copy.deepcopy(cache_lists["tracking_interactions"])
+        new_cache_lists["tracking_interactions"] = copy.deepcopy(
+            cache_lists["tracking_interactions"]
+        )
 
         new_cache_lists["tracking_users_in_channel"] = []
         for m in cache_lists["tracking_users_in_channel"]:
