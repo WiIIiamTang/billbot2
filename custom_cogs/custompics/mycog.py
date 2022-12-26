@@ -47,6 +47,7 @@ class CustomPics(commands.Cog):
         self.tracking_users_in_channel = []
         self.tracking_statuses = []
         self.tracking_activities = []
+        self.tracking_interactions = []
         self.min_delete_time = 15
         self.hchannel = None
         self.owner = None
@@ -74,7 +75,7 @@ class CustomPics(commands.Cog):
             },
             "interaction_voice": {
                 "count_by_channel": {"_TOTAL": -1},
-                "count_by_users": {},
+                "count_by_users": {"pairs": []},
             },
             "voice_state": {"count_by_channel": {"_TOTAL": -1}, "count_by_users": {}},
         }
@@ -144,6 +145,8 @@ class CustomPics(commands.Cog):
             self.tracking_activities = data["tracking_activities"]
             for m in self.tracking_activities:
                 m["user"] = discord.utils.get(members, id=m["user"])
+
+            self.tracking_interactions = data["tracking_interactions"]
 
         self.logger.info("Done.")
 
@@ -224,6 +227,7 @@ class CustomPics(commands.Cog):
             "tracking_users_in_channel": self.tracking_users_in_channel,
             "tracking_statuses": self.tracking_statuses,
             "tracking_activities": self.tracking_activities,
+            "tracking_interactions": self.tracking_interactions,
         }
 
         # Send the cache_lists str as a file since it will be too long as a normal message
@@ -342,7 +346,107 @@ class CustomPics(commands.Cog):
 
         self.tracking_activities = []
 
+        # tracking interactions
+        stat_interaction = self.stats["interaction_voice"]["count_by_users"]["pairs"]
+        for p in self.tracking_interactions:
+            # Get the partner
+            partner = p["user1"]
+            member = p["user2"]
+
+            # Add the time passed to the stats in minutes
+            time_passed = datetime.now() - p["first_time_met"]
+            minutes = round(time_passed.total_seconds() / 60, 2)
+
+            # Check if the pair already exists in the stats
+            pair_in_stats = [
+                pp
+                for pp in stat_interaction
+                if (pp["user1"] == member and pp["user2"] == partner)
+                or (pp["user1"] == partner and pp["user2"] == member)
+            ]
+            if not pair_in_stats:
+                stat_interaction.append(
+                    {"user1": member, "user2": partner, "time": minutes}
+                )
+            else:
+                existing_pair = pair_in_stats[0]
+                existing_pair["time"] += minutes
+
+        self.tracking_interactions = []
+
         await ctx.send("Stats were written with current cache and reset.")
+
+    @commands.Cog.listener("on_voice_state_update")
+    async def track_interaction_stat(self, member, before, after):
+        # If a user joins a voice channel, start tracking interactions
+        # They should not exist in the cog cache yet, so add them in for each member.
+        if before.channel is None and after.channel is not None:
+            # for each member in the after channel, add the pair to the tracking_interactions
+            for m in after.channel.members:
+                if m != member:
+                    # Only append if the pair does not exist yet
+                    pair = [
+                        p
+                        for p in self.tracking_interactions
+                        if (p["user1"] == member.name and p["user2"] == m.name)
+                        or (p["user1"] == m.name and p["user2"] == member.name)
+                    ]
+                    if not pair:
+                        self.tracking_interactions.append(
+                            {
+                                "user1": member.name,
+                                "user2": m.name,
+                                "first_time_met": datetime.now(),
+                            }
+                        )  # This is only added if the pair does not exist yet
+
+        # Else, stop tracking interactions if a user leaves a voice channel,
+        # or when they change channels
+        elif (before.channel is not None and after.channel is None) or (
+            before.channel is not None
+            and after.channel is not None
+            and before.channel != after.channel
+        ):
+            # First grab the stat interactions
+            stat_interaction = self.stats["interaction_voice"]["count_by_users"][
+                "pairs"
+            ]
+
+            # Get the pairs that member was involved in
+            pairs = [
+                p
+                for p in self.tracking_interactions
+                if p["user1"] == member.name or p["user2"] == member.name
+            ]
+
+            # For each pair, add the time passed with their partner to the stats in minutes
+            for p in pairs:
+                # Get the partner
+                partner = p["user1"] if p["user2"] == member.name else p["user2"]
+
+                # Add the time passed to the stats in minutes
+                time_passed = datetime.now() - p["first_time_met"]
+                minutes = round(time_passed.total_seconds() / 60, 2)
+
+                # Check if the pair already exists in the stats
+                pair_in_stats = [
+                    pp
+                    for pp in stat_interaction
+                    if (pp["user1"] == member.name and pp["user2"] == partner)
+                    or (pp["user1"] == partner and pp["user2"] == member.name)
+                ]
+                if not pair_in_stats:
+                    stat_interaction.append(
+                        {"user1": member.name, "user2": partner, "time": minutes}
+                    )
+                else:
+                    existing_pair = pair_in_stats[0]
+                    existing_pair["time"] += minutes
+
+            # Remove the pair from tracking_interactions
+            self.tracking_interactions = [
+                p for p in self.tracking_interactions if p not in pairs
+            ]
 
     # TODO: this is getting really bad, there is too much code duplication
     @commands.Cog.listener("on_voice_state_update")
@@ -899,6 +1003,7 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
             "tracking_users_in_channel": self.tracking_users_in_channel,
             "tracking_statuses": self.tracking_statuses,
             "tracking_activities": self.tracking_activities,
+            "tracking_interactions": self.tracking_interactions,
         }
 
         new_cache_lists = {}
@@ -910,6 +1015,8 @@ Run `.auto_delete_remove` to stop auto deleting.".format(
             cache_lists["delete_message_from_these_users"]
         )
         new_cache_lists["messages_to_delete"] = []
+
+        new_cache_lists["tracking_interactions"] = copy.deepcopy(cache_lists["tracking_interactions"])
 
         new_cache_lists["tracking_users_in_channel"] = []
         for m in cache_lists["tracking_users_in_channel"]:
