@@ -541,21 +541,21 @@ class CustomPics(commands.Cog):
                 voice_state_channel_user["self_mute"] = voice_state_channel_user.get(
                     "self_mute", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
-            elif before.self_deaf:
+            if before.self_deaf:
                 voice_state[member.name]["self_deaf"] = voice_state[member.name].get(
                     "self_deaf", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
                 voice_state_channel_user["self_deaf"] = voice_state_channel_user.get(
                     "self_deaf", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
-            elif before.self_stream:
+            if before.self_stream:
                 voice_state[member.name]["self_stream"] = voice_state[member.name].get(
                     "self_stream", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
                 voice_state_channel_user["self_stream"] = voice_state_channel_user.get(
                     "self_stream", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
-            elif before.self_video:
+            if before.self_video:
                 voice_state[member.name]["self_video"] = voice_state[member.name].get(
                     "self_video", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
@@ -649,21 +649,21 @@ class CustomPics(commands.Cog):
                 voice_state_channel_user["self_mute"] = voice_state_channel_user.get(
                     "self_mute", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
-            elif before.self_deaf:
+            if before.self_deaf:
                 voice_state[member.name]["self_deaf"] = voice_state[member.name].get(
                     "self_deaf", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
                 voice_state_channel_user["self_deaf"] = voice_state_channel_user.get(
                     "self_deaf", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
-            elif before.self_stream:
+            if before.self_stream:
                 voice_state[member.name]["self_stream"] = voice_state[member.name].get(
                     "self_stream", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
                 voice_state_channel_user["self_stream"] = voice_state_channel_user.get(
                     "self_stream", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
-            elif before.self_video:
+            if before.self_video:
                 voice_state[member.name]["self_video"] = voice_state[member.name].get(
                     "self_video", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
@@ -703,21 +703,21 @@ class CustomPics(commands.Cog):
                 voice_state_channel_user["self_mute"] = voice_state_channel_user.get(
                     "self_mute", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
-            elif before.self_deaf:
+            if before.self_deaf:
                 voice_state[member.name]["self_deaf"] = voice_state[member.name].get(
                     "self_deaf", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
                 voice_state_channel_user["self_deaf"] = voice_state_channel_user.get(
                     "self_deaf", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
-            elif before.self_stream:
+            if before.self_stream:
                 voice_state[member.name]["self_stream"] = voice_state[member.name].get(
                     "self_stream", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
                 voice_state_channel_user["self_stream"] = voice_state_channel_user.get(
                     "self_stream", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
-            elif before.self_video:
+            if before.self_video:
                 voice_state[member.name]["self_video"] = voice_state[member.name].get(
                     "self_video", 0
                 ) + round(time_passed.total_seconds() / 60, 2)
