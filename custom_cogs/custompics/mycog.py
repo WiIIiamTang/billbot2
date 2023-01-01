@@ -737,9 +737,16 @@ class CustomPics(commands.Cog):
             user_info = [x for x in self.tracking_activities if x["user"] == after]
             if not user_info:
                 if after.activity is not None:
+                    activities_without_custom = [
+                        x
+                        for x in after.activities
+                        if x.type != discord.ActivityType.custom
+                    ]
+                    if not activities_without_custom:
+                        return
                     user_info = {
                         "user": after,
-                        "activity": after.activity.name,
+                        "activity": activities_without_custom[0].name,
                         "time": datetime.now(),
                     }
                     self.tracking_activities.append(user_info)
@@ -764,12 +771,15 @@ class CustomPics(commands.Cog):
                     stats[activity_name].get("_TOTAL", 0) + minutes
                 )
 
-                if after.activity is None:
+                activities_without_custom = [
+                    x for x in after.activities if x.type != discord.ActivityType.custom
+                ]
+                if after.activity is None or not activities_without_custom:
                     self.tracking_activities = [
                         x for x in self.tracking_activities if x["user"] != after
                     ]
                 else:
-                    user_info["activity"] = after.activity.name
+                    user_info["activity"] = activities_without_custom[0].name
                     user_info["time"] = datetime.now()
 
         ###################################################################
