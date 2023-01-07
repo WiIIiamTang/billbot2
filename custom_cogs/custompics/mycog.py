@@ -199,6 +199,11 @@ class CustomPics(commands.Cog):
             "https://cdn.discordapp.com/attachments/642483639719952384/859958140005908500/ll7f77rl7d871.png"
         )
 
+    @commands.command()
+    async def koibotping(self, ctx):
+        if ctx.author.id == 1058923327592345691:
+            await ctx.send("Koibot received")
+
     @commands.Cog.listener("on_message")
     async def track_words_stat(self, message):
         if message.author.bot or message.content.startswith("."):
