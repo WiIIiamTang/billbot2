@@ -16,3 +16,4 @@ services:
     - OWNER_ID=${OWNER_ID}
     - SERVER_ID=${SERVER_ID}
     - MONGO_DB_URI=${MONGO_DB_URI}
+    - EXTRA_ARGS="--co-owner ${CO_OWNER_ID}"
