@@ -31,7 +31,7 @@ jobs:
         id: precheck
         uses: fjogeleit/http-request-action@v1
         with:
-          url: ${{ secrets.KOI_PRECHECK_URL }}}
+          url: ${{ secrets.KOI_PRECHECK_URL }}
           method: "POST"
           bearerToken: ${{ secrets.BEARER_TOKEN }}
           contentType: "application/json"
