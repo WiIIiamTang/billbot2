@@ -14,4 +14,4 @@ r = requests.post(
         "Content-Type": "application/json",
     },
 )
-print(r.status_code, r.content)
+print("[NOTIFIER]", r.status_code, r.content)
