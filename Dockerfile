@@ -3,6 +3,7 @@ FROM phasecorex/red-discordbot:full
 COPY custom_cogs /app/custom_cogs/
 COPY setup-env.sh /app/functions/
 COPY main-loop.sh /app/functions/
+COPY notify_starting.py /app/functions/
 COPY tests /app/
 COPY conftest.py /app/
 

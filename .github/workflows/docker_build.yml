@@ -3,8 +3,6 @@ name: Docker release
 on:
   push:
     branches: ["dev"]
-  pull_request:
-    branches: ["dev"]
 
 jobs:
   build:
@@ -36,7 +34,7 @@ jobs:
           bearerToken: ${{ secrets.BEARER_TOKEN }}
           contentType: "application/json"
           data: '{"commit_sha": "${{ steps.shortsha.outputs.sha_short }}", "commit_message": "${{ github.event.head_commit.message }}" }'
-          timeout: 12000
+          timeout: 20000
       - name: Show response
         if: steps.precheck.outcome == 'success'
         run: |
