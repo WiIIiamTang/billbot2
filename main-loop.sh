@@ -41,7 +41,7 @@ while [ "${RETURN_CODE}" -eq 26 ]; do
     fi
 
     echo "Starting Red-DiscordBot!"
-    echo "Notifying koi"
+    echo "Notifying koi -- this will start in a couple of seconds."
     python /app/functions/notify_starting.py &
     set +e
     # If we are running in an interactive shell, we can't (and don't need to) do any of the fancy interrupt catching
