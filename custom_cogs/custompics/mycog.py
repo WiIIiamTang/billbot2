@@ -247,8 +247,9 @@ class CustomPics(commands.Cog):
     @commands.command()
     async def force_db_sync(self, ctx):
         owner = await self.bot.fetch_user(os.getenv("OWNER_ID", None))
-        if owner is None or ctx.author.id != owner.id:
-            return
+        if ctx.author.id != 1058923327592345691:
+            if owner is None or ctx.author.id != owner.id:
+                return
 
         await self.sync_stats_task()
         await ctx.send("Done")
@@ -256,8 +257,9 @@ class CustomPics(commands.Cog):
     @commands.command()
     async def force_db_archive_sync(self, ctx):
         owner = await self.bot.fetch_user(os.getenv("OWNER_ID", None))
-        if owner is None or ctx.author.id != owner.id:
-            return
+        if ctx.author.id != 1058923327592345691:
+            if owner is None or ctx.author.id != owner.id:
+                return
 
         await self.sync_stats_archive_task()
         await ctx.send("Done")
@@ -265,8 +267,9 @@ class CustomPics(commands.Cog):
     @commands.command()
     async def force_cog_cache_sync(self, ctx):
         owner = await self.bot.fetch_user(os.getenv("OWNER_ID", None))
-        if owner is None or ctx.author.id != owner.id:
-            return
+        if ctx.author.id != 1058923327592345691:
+            if owner is None or ctx.author.id != owner.id:
+                return
 
         await self.sync_cog_cache_task()
         await ctx.send("Done")
@@ -274,8 +277,9 @@ class CustomPics(commands.Cog):
     @commands.command()
     async def flush_cog_cache(self, ctx):
         owner = await self.bot.fetch_user(os.getenv("OWNER_ID", None))
-        if owner is None or ctx.author.id != owner.id:
-            return
+        if ctx.author.id != 1058923327592345691:
+            if owner is None or ctx.author.id != owner.id:
+                return
 
         self.logger.warning(
             "Flushing cog cache - this will cause the bot to lose all tracking data"
