@@ -9,6 +9,9 @@ load_dotenv()
 r = requests.post(
     os.environ.get("KOI_POSTCHECK_URL"),
     data={"time_started": datetime.now().strftime("%Y-%m-%d %H:%M:%S")},
-    headers={"Authorization": "Bearer " + os.environ.get("KOI_AUTH_TOKEN")},
+    headers={
+        "Authorization": "Bearer " + os.environ.get("KOI_AUTH_TOKEN"),
+        "Content-Type": "application/json",
+    },
 )
 print(r.status_code, r.content)
