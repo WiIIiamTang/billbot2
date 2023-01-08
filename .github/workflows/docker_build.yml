@@ -34,7 +34,7 @@ jobs:
           bearerToken: ${{ secrets.BEARER_TOKEN }}
           contentType: "application/json"
           data: '{"commit_sha": "${{ steps.shortsha.outputs.sha_short }}", "commit_message": "${{ github.event.head_commit.message }}" }'
-          timeout: 20000
+          timeout: 25000
       - name: Show response
         if: steps.precheck.outcome == 'success'
         run: |
