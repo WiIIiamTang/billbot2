@@ -42,3 +42,17 @@ Custom cogs from `custom_cogs` are copied to the image at build time. These can 
 [p]addpath /app/custom-cogs
 [p]load cogname
 ```
+
+# About
+
+A discord bot built on top of redbot, with koi automation for deployment pre/post setup
+
+# Architecture
+
+![arch drawio](https://user-images.githubusercontent.com/48343678/211228032-d5f87b86-5f75-4c28-a1f3-3abd8e46f6d1.png)
+
+Repos in this project:
+- billbot2 (here)
+- [koi](https://github.com/WiIIiamTang/koi)
+- [discordwrapped](https://github.com/WiIIiamTang/discordwrapped)
+
