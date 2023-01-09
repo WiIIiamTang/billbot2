@@ -457,6 +457,26 @@ class CustomPics(commands.Cog):
                 p for p in self.tracking_interactions if p not in pairs
             ]
 
+            if after.channel is not None:
+                # for each member in the after channel, add the pair to the tracking_interactions
+                for m in after.channel.members:
+                    if m != member:
+                        # Only append if the pair does not exist yet
+                        pair = [
+                            p
+                            for p in self.tracking_interactions
+                            if (p["user1"] == member.name and p["user2"] == m.name)
+                            or (p["user1"] == m.name and p["user2"] == member.name)
+                        ]
+                        if not pair:
+                            self.tracking_interactions.append(
+                                {
+                                    "user1": member.name,
+                                    "user2": m.name,
+                                    "first_time_met": datetime.now(),
+                                }
+                            )  # This is only added if the pair does not exist yet
+
     # TODO: this is getting really bad, there is too much code duplication
     @commands.Cog.listener("on_voice_state_update")
     async def track_voice_stat(self, member, before, after):
